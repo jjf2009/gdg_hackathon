@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 
 class WeatherBanner extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String message;
   final String riskLevel;
 
@@ -44,7 +44,7 @@ class WeatherBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
+          Icon(icon, size: 18, color: textColor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

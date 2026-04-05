@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_language.dart';
 
 /// Abstract mini field-health map — a 4×6 grid of colored cells
 /// representing zones of a field. Colors are randomized but weighted
@@ -36,7 +37,7 @@ class FieldHealthMap extends StatelessWidget {
                   size: 18, color: CropDocColors.primary),
               const SizedBox(width: 8),
               Text(
-                'Field Health',
+                t(context, 'field_health'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const Spacer(),
@@ -60,10 +61,27 @@ class FieldHealthMap extends StatelessWidget {
               ),
               itemCount: 24,
               itemBuilder: (context, i) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: _cellColors[i],
-                    borderRadius: BorderRadius.circular(4),
+                return GestureDetector(
+                  onTap: () {
+                    final zone = 'Zone ${(i ~/ 6) + 1}-${(i % 6) + 1}';
+                    final status = _cellColors[i] == CropDocColors.danger
+                        ? t(context, 'affected')
+                        : _cellColors[i] == CropDocColors.warning
+                            ? t(context, 'watch')
+                            : t(context, 'healthy');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$zone: $status'),
+                        duration: const Duration(seconds: 1),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _cellColors[i],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 );
               },
@@ -76,11 +94,11 @@ class FieldHealthMap extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _LegendDot(color: CropDocColors.safe, label: 'Healthy'),
+              _LegendDot(color: CropDocColors.safe, label: t(context, 'healthy')),
               const SizedBox(width: 16),
-              _LegendDot(color: CropDocColors.warning, label: 'Watch'),
+              _LegendDot(color: CropDocColors.warning, label: t(context, 'watch')),
               const SizedBox(width: 16),
-              _LegendDot(color: CropDocColors.danger, label: 'Affected'),
+              _LegendDot(color: CropDocColors.danger, label: t(context, 'affected')),
             ],
           ),
         ],

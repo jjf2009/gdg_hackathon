@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import '../../config/app_language.dart';
 
 class HealthBadge extends StatelessWidget {
   final String severity;
@@ -20,25 +21,25 @@ class HealthBadge extends StatelessWidget {
 
     switch (severity) {
       case 'critical':
-        label = 'Critical';
+        label = t(context, 'critical');
         bgColor = CropDocColors.danger;
         textColor = Colors.white;
         icon = Icons.error_rounded;
         break;
       case 'high':
-        label = 'Needs Attention';
+        label = t(context, 'needs_attention');
         bgColor = const Color(0xFFE85D5D);
         textColor = Colors.white;
         icon = Icons.warning_amber_rounded;
         break;
       case 'medium':
-        label = 'Monitor';
+        label = t(context, 'monitor');
         bgColor = CropDocColors.warning;
         textColor = const Color(0xFF5C4A00);
         icon = Icons.visibility_rounded;
         break;
       default:
-        label = 'Healthy';
+        label = t(context, 'healthy');
         bgColor = CropDocColors.safe;
         textColor = Colors.white;
         icon = Icons.check_circle_rounded;

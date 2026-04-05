@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:image_picker/image_picker.dart';
 import '../config/theme.dart';
+import '../config/app_language.dart';
 import '../data/dummy_weather.dart';
 import '../widgets/common/weather_banner.dart';
 import '../widgets/scan/scan_button.dart';
@@ -18,10 +20,36 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _scanning = false;
+  final ImagePicker _picker = ImagePicker();
 
   void _startScan() {
     HapticFeedback.mediumImpact();
-    setState(() => _scanning = true);
+    _pickImage(ImageSource.camera);
+  }
+
+  void _pickFromGallery() {
+    HapticFeedback.lightImpact();
+    _pickImage(ImageSource.gallery);
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (image != null && mounted) {
+        // Image picked — run the scan animation
+        setState(() => _scanning = true);
+      }
+    } catch (e) {
+      // If camera/gallery fails (e.g., permission denied), still demo the scan
+      if (mounted) {
+        setState(() => _scanning = true);
+      }
+    }
   }
 
   void _onScanDone() {
@@ -74,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 child: WeatherBanner(
                   icon: weather.icon,
-                  message: weather.riskMessage,
+                  message: t(context, 'weather_msg'),
                   riskLevel: weather.riskLevel,
                 ).animate().slideY(
                       begin: -0.3,
@@ -107,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Hint text
               Text(
-                'Point at the affected leaf',
+                t(context, 'home_hint'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 15,
@@ -118,16 +146,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const Spacer(),
 
-              // Scan button
+              // Bottom action area — Gallery + Scan + label
               Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: ScanButton(onTap: _startScan),
-              ).animate().scale(
-                    begin: const Offset(0.8, 0.8),
-                    delay: 200.ms,
-                    duration: 500.ms,
-                    curve: Curves.easeOutBack,
-                  ),
+                padding: const EdgeInsets.only(bottom: 28, left: 28, right: 28),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // Gallery button
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: _pickFromGallery,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.photo_library_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          t(context, 'home_gallery'),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
+
+                    const SizedBox(width: 32),
+
+                    // Scan button (camera)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ScanButton(onTap: _startScan),
+                        const SizedBox(height: 6),
+                        Text(
+                          t(context, 'home_take_photo'),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ).animate().scale(
+                          begin: const Offset(0.8, 0.8),
+                          delay: 200.ms,
+                          duration: 500.ms,
+                          curve: Curves.easeOutBack,
+                        ),
+
+                    const SizedBox(width: 32),
+
+                    // Spacer to keep scan button centered
+                    const SizedBox(width: 50),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

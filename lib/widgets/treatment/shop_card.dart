@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/app_language.dart';
 import '../../models/treatment.dart';
 
 class ShopCard extends StatelessWidget {
@@ -144,7 +145,7 @@ class ShopCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () {},
               icon: const Icon(Icons.directions_rounded, size: 18),
-              label: const Text('Get Directions'),
+              label: Text(t(context, 'get_directions')),
             ),
           ),
         ],

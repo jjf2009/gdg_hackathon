@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
+
 class TreatmentStep {
-  final String icon;
+  final IconData icon;
   final String instruction;
   final String urgencyLabel;
   final String? detail;

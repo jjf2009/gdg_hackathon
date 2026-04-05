@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/app_language.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -37,25 +38,25 @@ class BottomNavBar extends StatelessWidget {
             children: [
               _NavItem(
                 icon: Icons.center_focus_strong_rounded,
-                label: 'Scan',
+                label: t(context, 'nav_scan'),
                 isActive: currentIndex == 0,
                 onTap: () => onTap(0),
               ),
               _NavItem(
                 icon: Icons.biotech_rounded,
-                label: 'Result',
+                label: t(context, 'nav_result'),
                 isActive: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
               _NavItem(
                 icon: Icons.local_pharmacy_rounded,
-                label: 'Treat',
+                label: t(context, 'nav_treat'),
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
               ),
               _NavItem(
                 icon: Icons.history_rounded,
-                label: 'History',
+                label: t(context, 'nav_history'),
                 isActive: currentIndex == 3,
                 onTap: () => onTap(3),
               ),

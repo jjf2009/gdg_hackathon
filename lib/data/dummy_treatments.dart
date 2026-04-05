@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/treatment.dart';
 
 class DummyTreatments {
@@ -5,19 +6,19 @@ class DummyTreatments {
 
   static const List<TreatmentStep> earlyBlightSteps = [
     TreatmentStep(
-      icon: '🧴',
+      icon: Icons.sanitizer_rounded,
       instruction: 'Spray Mancozeb solution before sunset today',
       urgencyLabel: 'Do today',
       detail: 'Mix 2.5g per litre of water. Spray on all leaves, top and bottom.',
     ),
     TreatmentStep(
-      icon: '✂️',
+      icon: Icons.content_cut_rounded,
       instruction: 'Remove the 3-4 most affected leaves',
       urgencyLabel: 'Do today',
       detail: 'Cut them off and take them away from the field. Don\'t leave them on the ground.',
     ),
     TreatmentStep(
-      icon: '💧',
+      icon: Icons.water_drop_rounded,
       instruction: 'Water at the base only — avoid wetting leaves',
       urgencyLabel: 'Ongoing',
       detail: 'Use drip irrigation or pour water directly at the roots. Wet leaves help the fungus grow.',

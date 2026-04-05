@@ -4,6 +4,7 @@ class DummyHistory {
   DummyHistory._();
 
   static List<ScanRecord> records = [
+    // === Rabi season (Dec–May) ===
     ScanRecord(
       date: DateTime(2026, 4, 5),
       cropName: 'Tomato',
@@ -39,14 +40,6 @@ class DummyHistory {
       treatmentApplied: 'Metalaxyl + Mancozeb',
     ),
     ScanRecord(
-      date: DateTime(2026, 2, 10),
-      cropName: 'Soybean',
-      diseaseName: 'Healthy',
-      status: 'resolved',
-      confidence: 0.93,
-      imagePath: 'assets/images/healthy_leaf.png',
-    ),
-    ScanRecord(
       date: DateTime(2026, 1, 18),
       cropName: 'Cotton',
       diseaseName: 'Bacterial Blight',
@@ -54,6 +47,43 @@ class DummyHistory {
       confidence: 0.84,
       imagePath: 'assets/images/early_blight_leaf.png',
       treatmentApplied: 'Copper oxychloride',
+    ),
+
+    // === Kharif season (Jun–Nov) ===
+    ScanRecord(
+      date: DateTime(2025, 10, 12),
+      cropName: 'Soybean',
+      diseaseName: 'Bacterial Blight',
+      status: 'resolved',
+      confidence: 0.81,
+      imagePath: 'assets/images/early_blight_leaf.png',
+      treatmentApplied: 'Streptomycin sulphate',
+    ),
+    ScanRecord(
+      date: DateTime(2025, 9, 5),
+      cropName: 'Cotton',
+      diseaseName: 'Healthy',
+      status: 'resolved',
+      confidence: 0.96,
+      imagePath: 'assets/images/healthy_leaf.png',
+    ),
+    ScanRecord(
+      date: DateTime(2025, 8, 18),
+      cropName: 'Soybean',
+      diseaseName: 'Powdery Mildew',
+      status: 'resolved',
+      confidence: 0.73,
+      imagePath: 'assets/images/healthy_leaf.png',
+      treatmentApplied: 'Wettable sulphur',
+    ),
+    ScanRecord(
+      date: DateTime(2025, 7, 2),
+      cropName: 'Cotton',
+      diseaseName: 'Early Blight',
+      status: 'resolved',
+      confidence: 0.88,
+      imagePath: 'assets/images/early_blight_leaf.png',
+      treatmentApplied: 'Mancozeb spray',
     ),
   ];
 

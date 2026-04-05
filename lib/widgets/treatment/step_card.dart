@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 
 class StepCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String instruction;
   final String urgencyLabel;
   final String? detail;
@@ -11,7 +11,7 @@ class StepCard extends StatelessWidget {
 
   const StepCard({
     super.key,
-    required this.emoji,
+    required this.icon,
     required this.instruction,
     required this.urgencyLabel,
     this.detail,
@@ -35,7 +35,6 @@ class StepCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(
         bottom: 10,
-        // Slight left offset variation to break symmetry
         left: index == 1 ? 4.0 : 0,
       ),
       padding: const EdgeInsets.all(16),
@@ -54,7 +53,6 @@ class StepCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Step number circle
           Container(
             width: 38,
             height: 38,
@@ -63,9 +61,10 @@ class StepCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(11),
             ),
             child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 20),
+              child: Icon(
+                icon,
+                size: 20,
+                color: CropDocColors.primary,
               ),
             ),
           ),

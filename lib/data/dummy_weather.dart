@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/weather_info.dart';
 
 class DummyWeather {
@@ -9,6 +10,6 @@ class DummyWeather {
     humidity: 78,
     riskLevel: 'high',
     riskMessage: 'High humidity today — risk of fungus',
-    icon: '⛅',
+    icon: Icons.cloud_rounded,
   );
 }
