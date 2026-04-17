@@ -8,6 +8,7 @@ import '../models/disease.dart';
 import '../widgets/common/health_badge.dart';
 import '../widgets/common/listen_fab.dart';
 import '../widgets/scan/confidence_meter.dart';
+import '../widgets/scan/recovery_slider.dart';
 
 class ScanResultScreen extends StatelessWidget {
   final VoidCallback onViewTreatment;
@@ -120,6 +121,17 @@ class ScanResultScreen extends StatelessWidget {
                     ).animate()
                         .fadeIn(delay: 600.ms, duration: 400.ms)
                         .slideY(begin: 0.1, duration: 400.ms),
+
+                    const SizedBox(height: 20),
+
+                    // Before/After recovery slider
+                    RecoverySlider(
+                      beforeImage: 'assets/images/early_blight_leaf.png',
+                      afterImage: 'assets/images/healthy_leaf.png',
+                    ).animate()
+                        .fadeIn(delay: 800.ms, duration: 400.ms)
+                        .slideY(begin: 0.1, duration: 400.ms),
+
                     const SizedBox(height: 100),
                   ],
                 ),

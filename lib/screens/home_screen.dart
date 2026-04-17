@@ -8,6 +8,8 @@ import '../data/dummy_weather.dart';
 import '../widgets/common/weather_banner.dart';
 import '../widgets/scan/scan_button.dart';
 import '../widgets/scan/scan_overlay.dart';
+import '../services/scan_history_service.dart';
+import '../models/scan_record.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onScanComplete;
@@ -53,6 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onScanDone() {
+    // Add this scan to history
+    // TODO: Replace with real model prediction when connected
+    ScanHistoryService.instance.addScan(ScanRecord(
+      date: DateTime.now(),
+      cropName: 'Tomato',
+      diseaseName: 'Early Blight',
+      status: 'active',
+      confidence: 0.87,
+      imagePath: 'assets/images/early_blight_leaf.png',
+    ));
     setState(() => _scanning = false);
     widget.onScanComplete();
   }

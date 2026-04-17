@@ -55,10 +55,16 @@ class BottomNavBar extends StatelessWidget {
                 onTap: () => onTap(2),
               ),
               _NavItem(
-                icon: Icons.history_rounded,
-                label: t(context, 'nav_history'),
+                icon: Icons.groups_rounded,
+                label: t(context, 'nav_community'),
                 isActive: currentIndex == 3,
                 onTap: () => onTap(3),
+              ),
+              _NavItem(
+                icon: Icons.history_rounded,
+                label: t(context, 'nav_history'),
+                isActive: currentIndex == 4,
+                onTap: () => onTap(4),
               ),
             ],
           ),
@@ -89,7 +95,7 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 64,
+        width: 56,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

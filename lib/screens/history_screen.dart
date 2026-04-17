@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../config/app_language.dart';
-import '../data/dummy_history.dart';
+import '../services/scan_history_service.dart';
 import '../models/scan_record.dart';
 import '../widgets/history/crop_timeline.dart';
 import '../widgets/history/field_health_map.dart';
@@ -20,7 +20,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _selectedSeason = 'Rabi';
 
   List<ScanRecord> get _filteredRecords {
-    return DummyHistory.records.where((r) {
+    return ScanHistoryService.instance.records.where((r) {
       if (_selectedSeason == 'Kharif') {
         return r.date.month >= 6 && r.date.month <= 11;
       } else {

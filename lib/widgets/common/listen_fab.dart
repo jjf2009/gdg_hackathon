@@ -60,7 +60,7 @@ class _ListenFabState extends State<ListenFab>
         _pulseController.reset();
       });
     } else {
-      final lang = LanguageScope.of(context).language;
+      final lang = LanguageScope.of(context)?.language ?? 'en';
       final ttsLocale = supportedLanguages
           .firstWhere((l) => l.code == lang,
               orElse: () => supportedLanguages.first)

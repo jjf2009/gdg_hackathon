@@ -6,6 +6,8 @@ import '../data/dummy_treatments.dart';
 import '../widgets/common/listen_fab.dart';
 import '../widgets/treatment/step_card.dart';
 import '../widgets/treatment/shop_card.dart';
+import '../widgets/treatment/spray_calendar.dart';
+import '../data/dummy_calendar.dart';
 
 class TreatmentScreen extends StatelessWidget {
   const TreatmentScreen({super.key});
@@ -149,6 +151,17 @@ class TreatmentScreen extends StatelessWidget {
                   },
                   childCount: shops.length,
                 ),
+              ),
+            ),
+
+            // Spray schedule calendar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: SprayCalendar(events: DummyCalendar.schedule)
+                    .animate()
+                    .fadeIn(delay: 800.ms, duration: 400.ms)
+                    .slideY(begin: 0.06, duration: 400.ms),
               ),
             ),
 

@@ -1,0 +1,444 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../config/theme.dart';
+import '../config/app_language.dart';
+import '../data/dummy_community.dart';
+import '../models/community_alert.dart';
+import '../widgets/community/disease_map.dart';
+import '../widgets/community/alert_card.dart';
+
+class CommunityScreen extends StatefulWidget {
+  const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+  final List<CommunityAlert> _userReports = [];
+
+  List<CommunityAlert> get _allAlerts => [..._userReports, ...DummyCommunity.alerts];
+  List<CommunityAlert> get _diseaseAlerts =>
+      _allAlerts.where((a) => a.diseaseName != 'Healthy').toList();
+
+  void _showReportSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _ReportDiseaseSheet(
+        onSubmit: (alert) {
+          setState(() => _userReports.insert(0, alert));
+          Navigator.pop(ctx);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(t(context, 'report_submitted')),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: CropDocColors.safe,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allAlerts = _allAlerts;
+    final diseaseAlerts = _diseaseAlerts;
+    final trends = DummyCommunity.trends;
+    final totalReports = diseaseAlerts.length;
+
+    return Stack(
+      children: [
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Header
+            SliverToBoxAdapter(
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t(context, 'community_alerts'),
+                          style: Theme.of(context).textTheme.headlineMedium),
+                      const SizedBox(height: 2),
+                      Text(t(context, 'community_subtitle'),
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Alert summary
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      CropDocColors.danger.withValues(alpha: 0.08),
+                      CropDocColors.warning.withValues(alpha: 0.06),
+                    ]),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: CropDocColors.danger.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                          color: CropDocColors.danger.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text('$totalReports',
+                            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700,
+                              color: CropDocColors.danger)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t(context, 'reports_near_you'),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: CropDocColors.danger)),
+                            Text(t(context, 'this_week_5km'),
+                              style: Theme.of(context).textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.notifications_active_rounded,
+                          color: CropDocColors.danger, size: 22),
+                    ],
+                  ),
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05),
+              ),
+            ),
+
+            // Disease map
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                child: DiseaseMap(alerts: allAlerts)
+                    .animate().fadeIn(delay: 200.ms, duration: 400.ms)
+                    .slideY(begin: 0.05, duration: 400.ms),
+              ),
+            ),
+
+            // Trending diseases
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 8),
+                child: Row(
+                  children: [
+                    Container(width: 4, height: 22,
+                      decoration: BoxDecoration(color: CropDocColors.warning, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(width: 10),
+                    Text(t(context, 'trending_diseases'),
+                        style: Theme.of(context).textTheme.headlineSmall),
+                  ],
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: trends.map((trend) {
+                    final isUp = trend.changePercent > 0;
+                    final color = isUp ? CropDocColors.danger : CropDocColors.safe;
+                    return Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: CropDocColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: CropDocColors.divider, width: 0.5),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(trend.icon, color: color, size: 20),
+                            const SizedBox(height: 6),
+                            Text('${trend.reportsThisWeek}',
+                              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700,
+                                color: CropDocColors.textPrimary)),
+                            const SizedBox(height: 2),
+                            Text(trend.diseaseName,
+                              style: GoogleFonts.outfit(fontSize: 10, color: CropDocColors.textMuted),
+                              textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 4),
+                            Text('${isUp ? '+' : ''}${trend.changePercent}%',
+                              style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
+              ),
+            ),
+
+            // Recent reports header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 8),
+                child: Row(
+                  children: [
+                    Container(width: 4, height: 22,
+                      decoration: BoxDecoration(color: CropDocColors.primary, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(width: 10),
+                    Text(t(context, 'recent_reports'),
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    const Spacer(),
+                    Text('${diseaseAlerts.length}',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ),
+
+            // Alert cards — user reports first (with "You" badge), then community
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    final alert = diseaseAlerts[i];
+                    final isUserReport = _userReports.contains(alert);
+                    return _WrappedAlertCard(
+                      alert: alert,
+                      isUserReport: isUserReport,
+                    ).animate()
+                        .fadeIn(delay: Duration(milliseconds: 600 + i * 80), duration: 300.ms)
+                        .slideX(begin: 0.05, duration: 300.ms);
+                  },
+                  childCount: diseaseAlerts.length,
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
+
+        // Report button FAB
+        Positioned(
+          bottom: 24, right: 20,
+          child: GestureDetector(
+            onTap: _showReportSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: CropDocColors.danger,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: CropDocColors.danger.withValues(alpha: 0.35),
+                    blurRadius: 14, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.add_alert_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    t(context, 'report_disease'),
+                    style: GoogleFonts.outfit(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Alert card wrapper that shows "You" badge on user-submitted reports
+class _WrappedAlertCard extends StatelessWidget {
+  final CommunityAlert alert;
+  final bool isUserReport;
+  const _WrappedAlertCard({required this.alert, required this.isUserReport});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isUserReport) return AlertCard(alert: alert);
+
+    return Stack(
+      children: [
+        AlertCard(alert: alert),
+        Positioned(
+          top: 8, right: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: CropDocColors.primary,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              t(context, 'you'),
+              style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bottom sheet for reporting a disease
+class _ReportDiseaseSheet extends StatefulWidget {
+  final ValueChanged<CommunityAlert> onSubmit;
+  const _ReportDiseaseSheet({required this.onSubmit});
+
+  @override
+  State<_ReportDiseaseSheet> createState() => _ReportDiseaseSheetState();
+}
+
+class _ReportDiseaseSheetState extends State<_ReportDiseaseSheet> {
+  String _selectedCrop = 'Tomato';
+  String _selectedDisease = 'Early Blight';
+
+  static const _crops = ['Tomato', 'Onion', 'Soybean', 'Cotton', 'Wheat', 'Rice'];
+  static const _diseases = [
+    'Early Blight', 'Late Blight', 'Powdery Mildew',
+    'Bacterial Blight', 'Leaf Curl', 'Root Rot',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: CropDocColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: CropDocColors.divider, borderRadius: BorderRadius.circular(2))),
+          ),
+          const SizedBox(height: 18),
+          Center(
+            child: Text(t(context, 'report_disease'),
+                style: Theme.of(context).textTheme.headlineSmall),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: Text(t(context, 'report_help_text'),
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center),
+          ),
+          const SizedBox(height: 20),
+
+          // Crop selector
+          Text(t(context, 'select_crop'),
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8, runSpacing: 8,
+            children: _crops.map((crop) {
+              final isSelected = crop == _selectedCrop;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedCrop = crop),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? CropDocColors.primary : CropDocColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? CropDocColors.primary : CropDocColors.divider, width: isSelected ? 1.5 : 0.5),
+                  ),
+                  child: Text(
+                    t(context, crop.toLowerCase()),
+                    style: GoogleFonts.outfit(
+                      fontSize: 13, fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : CropDocColors.textPrimary),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 18),
+
+          // Disease selector
+          Text(t(context, 'select_disease'),
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8, runSpacing: 8,
+            children: _diseases.map((disease) {
+              final isSelected = disease == _selectedDisease;
+              final key = disease.toLowerCase().replaceAll(' ', '_');
+              final label = t(context, key);
+              return GestureDetector(
+                onTap: () => setState(() => _selectedDisease = disease),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? CropDocColors.danger : CropDocColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? CropDocColors.danger : CropDocColors.divider, width: isSelected ? 1.5 : 0.5),
+                  ),
+                  child: Text(
+                    label != key ? label : disease,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13, fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white : CropDocColors.textPrimary),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Submit
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                widget.onSubmit(CommunityAlert(
+                  farmerName: t(context, 'you'),
+                  villageName: 'Baramati',
+                  diseaseName: _selectedDisease,
+                  cropName: _selectedCrop,
+                  distanceKm: 0.0,
+                  reportedAt: DateTime.now(),
+                  mapX: 0.48, mapY: 0.45,
+                  severity: CropDocColors.danger,
+                ));
+              },
+              icon: const Icon(Icons.send_rounded, size: 18),
+              label: Text(t(context, 'submit_report')),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CropDocColors.danger,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
