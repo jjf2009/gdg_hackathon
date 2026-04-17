@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../config/app_language.dart';
 import '../data/dummy_community.dart';
+import '../services/scan_history_service.dart';
 import '../models/community_alert.dart';
 import '../widgets/community/disease_map.dart';
 import '../widgets/community/alert_card.dart';
@@ -18,7 +19,28 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   final List<CommunityAlert> _userReports = [];
 
-  List<CommunityAlert> get _allAlerts => [..._userReports, ...DummyCommunity.alerts];
+  /// Auto-generate alert from latest scan if it detected a disease
+  List<CommunityAlert> get _autoAlerts {
+    final records = ScanHistoryService.instance.records;
+    final alerts = <CommunityAlert>[];
+    for (final r in records) {
+      if (r.diseaseName != 'Healthy') {
+        alerts.add(CommunityAlert(
+          farmerName: t(context, 'you'),
+          villageName: 'Baramati',
+          diseaseName: r.diseaseName,
+          cropName: r.cropName,
+          distanceKm: 0.0,
+          reportedAt: r.date,
+          mapX: 0.48, mapY: 0.45,
+          severity: CropDocColors.danger,
+        ));
+      }
+    }
+    return alerts;
+  }
+
+  List<CommunityAlert> get _allAlerts => [..._userReports, ..._autoAlerts, ...DummyCommunity.alerts];
   List<CommunityAlert> get _diseaseAlerts =>
       _allAlerts.where((a) => a.diseaseName != 'Healthy').toList();
 
@@ -47,7 +69,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Widget build(BuildContext context) {
     final allAlerts = _allAlerts;
     final diseaseAlerts = _diseaseAlerts;
-    final trends = DummyCommunity.trends;
+    // Compute trends dynamically from all alerts
+    final trendMap = <String, int>{};
+    for (final a in diseaseAlerts) {
+      trendMap[a.diseaseName] = (trendMap[a.diseaseName] ?? 0) + 1;
+    }
+    final sortedDiseases = trendMap.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final trends = sortedDiseases.take(3).map((e) {
+      final count = e.value;
+      return DiseaseTrend(
+        diseaseName: e.key,
+        reportsThisWeek: count,
+        changePercent: count > 5 ? 40 : (count > 2 ? 10 : -20),
+        icon: count > 5 ? Icons.trending_up_rounded
+            : count > 2 ? Icons.trending_flat_rounded
+            : Icons.trending_down_rounded,
+      );
+    }).toList();
+    if (trends.isEmpty) {
+      trends.addAll(DummyCommunity.trends);
+    }
     final totalReports = diseaseAlerts.length;
 
     return Stack(

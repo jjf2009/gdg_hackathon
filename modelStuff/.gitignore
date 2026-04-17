@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+
+# Dataset / split output (don't commit)
+dataset/
+data_split/
+
+# Model output
+# models/
+*.keras
+
+# Logs
+logs/
+
+# Misc
+# *.tflite
+.DS_Store
+*.log
+
+# Archives
+*.zip
+archive.zip
+
+# IDEs
+.vscode/
+.idea/
+
+# Task Tracking
+task.md

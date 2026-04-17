@@ -10,8 +10,9 @@ import 'screens/community_screen.dart';
 import 'screens/history_screen.dart';
 import 'widgets/layout/bottom_nav_bar.dart';
 import 'widgets/common/connectivity_banner.dart';
+import 'services/model_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
@@ -21,6 +22,8 @@ void main() {
       systemNavigationBarColor: Colors.white,
     ),
   );
+  // Load TFLite model (fails silently if model files not present)
+  await ModelService.load();
   runApp(const CropDocApp());
 }
 

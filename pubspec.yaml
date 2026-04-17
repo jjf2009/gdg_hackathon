@@ -15,6 +15,8 @@ dependencies:
   percent_indicator: ^4.2.5
   image_picker: ^1.1.2
   flutter_tts: ^4.2.0
+  tflite_flutter: ^0.11.0
+  image: ^4.5.3
 
 dev_dependencies:
   flutter_test:
@@ -26,6 +28,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/model/
 
   fonts:
     - family: Outfit

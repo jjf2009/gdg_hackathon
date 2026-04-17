@@ -2,27 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../config/theme.dart';
 import '../config/app_language.dart';
-import '../data/dummy_treatments.dart';
+import '../data/treatment_database.dart';
+import '../services/scan_history_service.dart';
 import '../widgets/common/listen_fab.dart';
 import '../widgets/treatment/step_card.dart';
 import '../widgets/treatment/shop_card.dart';
 import '../widgets/treatment/spray_calendar.dart';
-import '../data/dummy_calendar.dart';
 
 class TreatmentScreen extends StatelessWidget {
   const TreatmentScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final shops = DummyTreatments.nearbyShops;
-    final stepKeys = [
-      (Icons.sanitizer_rounded, 'step1', 'step1_detail', 'do_today'),
-      (Icons.content_cut_rounded, 'step2', 'step2_detail', 'do_today'),
-      (Icons.water_drop_rounded, 'step3', 'step3_detail', 'ongoing'),
-    ];
+    // Read disease from latest prediction
+    final prediction = ScanHistoryService.instance.lastPrediction;
 
-    final speechText =
-        '${t(context, 'what_to_do')}. ${t(context, 'step1')}. ${t(context, 'step2')}. ${t(context, 'step3')}.';
+    final diseaseName = prediction?.diseaseName ?? 'Early Blight';
+    final cropName = prediction?.cropName ?? 'Tomato';
+    final isHealthy = prediction?.isHealthy ?? false;
+
+    // Get disease-specific data
+    final steps = TreatmentDatabase.getSteps(diseaseName);
+    final shops = TreatmentDatabase.getShops(diseaseName);
+    final schedule = TreatmentDatabase.getSchedule(diseaseName);
+
+    final speechText = isHealthy
+        ? 'Your $cropName plant is healthy. No treatment needed. Next check in 7 days.'
+        : 'Treatment plan for $diseaseName on $cropName. ${steps.map((s) => s.instruction).join('. ')}.';
 
     return Stack(
       children: [
@@ -44,26 +50,45 @@ class TreatmentScreen extends StatelessWidget {
               ),
             ),
 
-            // Disease reference
+            // Disease reference chip — dynamic
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: CropDocColors.dangerLight.withValues(alpha: 0.5),
+                    color: (isHealthy ? CropDocColors.safeLight : CropDocColors.dangerLight)
+                        .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: CropDocColors.danger.withValues(alpha: 0.15)),
+                    border: Border.all(
+                      color: (isHealthy ? CropDocColors.safe : CropDocColors.danger)
+                          .withValues(alpha: 0.15),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.pest_control_rounded, size: 18, color: CropDocColors.danger),
-                      const SizedBox(width: 10),
-                      Text(
-                        '${t(context, 'early_blight')} — ${t(context, 'tomato')}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: CropDocColors.danger),
+                      Icon(
+                        isHealthy ? Icons.check_circle_rounded : Icons.pest_control_rounded,
+                        size: 18,
+                        color: isHealthy ? CropDocColors.safe : CropDocColors.danger,
                       ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '$diseaseName — $cropName',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: isHealthy ? CropDocColors.safe : CropDocColors.danger,
+                          ),
+                        ),
+                      ),
+                      if (prediction != null)
+                        Text(
+                          '${(prediction.confidence * 100).toStringAsFixed(0)}%',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isHealthy ? CropDocColors.safe : CropDocColors.danger,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                     ],
                   ),
                 ).animate().fadeIn(duration: 300.ms),
@@ -84,81 +109,84 @@ class TreatmentScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text(t(context, 'what_to_do'),
-                        style: Theme.of(context).textTheme.headlineSmall),
+                    Text(
+                      isHealthy ? t(context, 'maintenance_tips') : t(context, 'what_to_do'),
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ],
                 ),
               ),
             ),
 
-            // Step cards
+            // Step cards — now disease-specific
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
-                    final step = stepKeys[i];
+                    final step = steps[i];
                     return StepCard(
-                      icon: step.$1,
-                      instruction: t(context, step.$2),
-                      urgencyLabel: t(context, step.$4),
-                      detail: t(context, step.$3),
+                      icon: step.icon,
+                      instruction: step.instruction,
+                      urgencyLabel: step.urgencyLabel,
+                      detail: step.detail,
                       index: i,
                     ).animate()
                         .fadeIn(delay: Duration(milliseconds: 200 + i * 120), duration: 400.ms)
                         .slideY(begin: 0.08, delay: Duration(milliseconds: 200 + i * 120), duration: 400.ms);
                   },
-                  childCount: stepKeys.length,
+                  childCount: steps.length,
                 ),
               ),
             ),
 
-            // Buy nearby header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20, right: 20, top: 14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4, height: 22,
-                      decoration: BoxDecoration(
-                        color: CropDocColors.secondary,
-                        borderRadius: BorderRadius.circular(2),
+            // Buy nearby — only for diseased
+            if (!isHealthy) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 4, height: 22,
+                        decoration: BoxDecoration(
+                          color: CropDocColors.secondary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(t(context, 'buy_nearby'),
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    const Spacer(),
-                    const Icon(Icons.location_on_rounded, size: 16, color: CropDocColors.textMuted),
-                    const SizedBox(width: 4),
-                    Text('Baramati', style: Theme.of(context).textTheme.bodySmall),
-                  ],
+                      const SizedBox(width: 10),
+                      Text(t(context, 'buy_nearby'),
+                          style: Theme.of(context).textTheme.headlineSmall),
+                      const Spacer(),
+                      const Icon(Icons.location_on_rounded, size: 16, color: CropDocColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text('Baramati', style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Shop cards
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) {
-                    return ShopCard(shop: shops[i])
-                        .animate()
-                        .fadeIn(delay: Duration(milliseconds: 600 + i * 150), duration: 400.ms)
-                        .slideY(begin: 0.06, delay: Duration(milliseconds: 600 + i * 150), duration: 400.ms);
-                  },
-                  childCount: shops.length,
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      return ShopCard(shop: shops[i])
+                          .animate()
+                          .fadeIn(delay: Duration(milliseconds: 600 + i * 150), duration: 400.ms)
+                          .slideY(begin: 0.06, delay: Duration(milliseconds: 600 + i * 150), duration: 400.ms);
+                    },
+                    childCount: shops.length,
+                  ),
                 ),
               ),
-            ),
+            ],
 
-            // Spray schedule calendar
+            // Spray schedule calendar — disease-specific
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: SprayCalendar(events: DummyCalendar.schedule)
+                child: SprayCalendar(events: schedule)
                     .animate()
                     .fadeIn(delay: 800.ms, duration: 400.ms)
                     .slideY(begin: 0.06, duration: 400.ms),

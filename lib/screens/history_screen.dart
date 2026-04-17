@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -181,6 +182,7 @@ class _RecordDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isHealthy = record.diseaseName == 'Healthy';
+    final isFilePath = record.imagePath.startsWith('/');
     return Container(
       decoration: const BoxDecoration(
         color: CropDocColors.surface,
@@ -199,9 +201,11 @@ class _RecordDetailSheet extends StatelessWidget {
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: Image.asset(record.imagePath, height: 140, width: double.infinity, fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) => Container(height: 140, color: CropDocColors.primary.withValues(alpha: 0.1)),
-            ),
+            child: isFilePath
+                ? Image.file(File(record.imagePath), height: 140, width: double.infinity, fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => _imageFallback())
+                : Image.asset(record.imagePath, height: 140, width: double.infinity, fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => _imageFallback()),
           ),
           const SizedBox(height: 16),
           Row(
@@ -269,6 +273,14 @@ class _RecordDetailSheet extends StatelessWidget {
       ),
     );
   }
+
+  static Widget _imageFallback() => Container(
+    height: 140,
+    color: CropDocColors.primary.withValues(alpha: 0.1),
+    child: const Center(
+      child: Icon(Icons.eco_rounded, size: 48, color: CropDocColors.primary),
+    ),
+  );
 }
 
 class _SeasonToggle extends StatelessWidget {

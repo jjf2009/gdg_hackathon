@@ -9,6 +9,7 @@ import '../widgets/common/weather_banner.dart';
 import '../widgets/scan/scan_button.dart';
 import '../widgets/scan/scan_overlay.dart';
 import '../services/scan_history_service.dart';
+import '../services/model_service.dart';
 import '../models/scan_record.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _scanning = false;
+  String? _pickedImagePath;
   final ImagePicker _picker = ImagePicker();
 
   void _startScan() {
@@ -42,29 +44,47 @@ class _HomeScreenState extends State<HomeScreen> {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      if (image != null && mounted) {
-        // Image picked — run the scan animation
+      if (mounted) {
+        _pickedImagePath = image?.path;
         setState(() => _scanning = true);
       }
     } catch (e) {
-      // If camera/gallery fails (e.g., permission denied), still demo the scan
+      // If camera/gallery fails, still demo the scan
       if (mounted) {
+        _pickedImagePath = null;
         setState(() => _scanning = true);
       }
     }
   }
 
-  void _onScanDone() {
-    // Add this scan to history
-    // TODO: Replace with real model prediction when connected
+  Future<void> _onScanDone() async {
+    // Run model if image was picked and model is loaded
+    ModelPrediction prediction;
+    if (_pickedImagePath != null && ModelService.isAvailable) {
+      prediction = await ModelService.predict(_pickedImagePath!);
+    } else {
+      // Fallback demo prediction
+      prediction = const ModelPrediction(
+        rawLabel: 'Tomato___Early_blight',
+        cropName: 'Tomato',
+        diseaseName: 'Early Blight',
+        confidence: 0.87,
+      );
+    }
+
+    // Save to history
     ScanHistoryService.instance.addScan(ScanRecord(
       date: DateTime.now(),
-      cropName: 'Tomato',
-      diseaseName: 'Early Blight',
-      status: 'active',
-      confidence: 0.87,
-      imagePath: 'assets/images/early_blight_leaf.png',
+      cropName: prediction.cropName,
+      diseaseName: prediction.diseaseName,
+      status: prediction.isHealthy ? 'resolved' : 'active',
+      confidence: prediction.confidence,
+      imagePath: _pickedImagePath ?? 'assets/images/early_blight_leaf.png',
     ));
+
+    // Store latest prediction globally so Result screen can read it
+    ScanHistoryService.instance.lastPrediction = prediction;
+
     setState(() => _scanning = false);
     widget.onScanComplete();
   }

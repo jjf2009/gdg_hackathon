@@ -1,10 +1,14 @@
 import '../models/scan_record.dart';
+import 'model_service.dart';
 
 /// Global scan history — shared across the app.
 /// When a real model is connected, the scan flow writes results here.
 class ScanHistoryService {
   ScanHistoryService._();
   static final ScanHistoryService instance = ScanHistoryService._();
+
+  /// Last prediction from the model — used by the Result screen
+  ModelPrediction? lastPrediction;
 
   final List<ScanRecord> _records = [
     // Seed with some past records for demo
