@@ -355,11 +355,25 @@ class _ReportDiseaseSheetState extends State<_ReportDiseaseSheet> {
   String _selectedCrop = 'Tomato';
   String _selectedDisease = 'Early Blight';
 
-  static const _crops = ['Tomato', 'Onion', 'Soybean', 'Cotton', 'Wheat', 'Rice'];
-  static const _diseases = [
-    'Early Blight', 'Late Blight', 'Powdery Mildew',
-    'Bacterial Blight', 'Leaf Curl', 'Root Rot',
-  ];
+  // From PlantVillage dataset — actual crops the model recognizes
+  static const Map<String, List<String>> _cropDiseases = {
+    'Apple': ['Apple Scab', 'Black Rot', 'Cedar Apple Rust'],
+    'Cherry': ['Powdery Mildew'],
+    'Corn': ['Cercospora Leaf Spot', 'Common Rust', 'Northern Leaf Blight'],
+    'Grape': ['Black Rot', 'Esca', 'Leaf Blight'],
+    'Orange': ['Haunglongbing'],
+    'Peach': ['Bacterial Spot'],
+    'Pepper': ['Bacterial Spot'],
+    'Potato': ['Early Blight', 'Late Blight'],
+    'Squash': ['Powdery Mildew'],
+    'Strawberry': ['Leaf Scorch'],
+    'Tomato': ['Bacterial Spot', 'Early Blight', 'Late Blight', 'Leaf Mold',
+               'Septoria Leaf Spot', 'Spider Mites', 'Target Spot',
+               'Yellow Leaf Curl Virus', 'Mosaic Virus'],
+  };
+
+  List<String> get _crops => _cropDiseases.keys.toList();
+  List<String> get _diseases => _cropDiseases[_selectedCrop] ?? [];
 
   @override
   Widget build(BuildContext context) {
@@ -399,7 +413,13 @@ class _ReportDiseaseSheetState extends State<_ReportDiseaseSheet> {
             children: _crops.map((crop) {
               final isSelected = crop == _selectedCrop;
               return GestureDetector(
-                onTap: () => setState(() => _selectedCrop = crop),
+                onTap: () => setState(() {
+                  _selectedCrop = crop;
+                  final diseases = _cropDiseases[crop] ?? [];
+                  if (!diseases.contains(_selectedDisease) && diseases.isNotEmpty) {
+                    _selectedDisease = diseases.first;
+                  }
+                }),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
