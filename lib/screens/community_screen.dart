@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/theme.dart';
 import '../config/app_language.dart';
 import '../data/dummy_community.dart';
@@ -228,6 +229,51 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     );
                   }).toList(),
                 ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
+              ),
+            ),
+
+            // Emergency Helpline Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 22, bottom: 8),
+                child: Row(
+                  children: [
+                    Container(width: 4, height: 22,
+                      decoration: BoxDecoration(color: CropDocColors.danger, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(width: 10),
+                    Text('Emergency Helpline',
+                        style: Theme.of(context).textTheme.headlineSmall),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    _HelplineCard(
+                      icon: Icons.agriculture_rounded,
+                      title: 'Krishi Vigyan Kendra',
+                      subtitle: 'Agricultural Science Center',
+                      phone: '1800-180-1551',
+                    ),
+                    const SizedBox(height: 8),
+                    _HelplineCard(
+                      icon: Icons.support_agent_rounded,
+                      title: 'Kisan Call Center',
+                      subtitle: 'Govt. Agri Helpline (Toll-Free)',
+                      phone: '1800-180-1551',
+                    ),
+                    const SizedBox(height: 8),
+                    _HelplineCard(
+                      icon: Icons.local_hospital_rounded,
+                      title: 'Plant Protection Advisor',
+                      subtitle: 'District Agriculture Officer',
+                      phone: '020-26123456',
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
               ),
             ),
 
@@ -496,6 +542,72 @@ class _ReportDiseaseSheetState extends State<_ReportDiseaseSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: CropDocColors.danger,
                 foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HelplineCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String phone;
+
+  const _HelplineCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.phone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: CropDocColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CropDocColors.divider, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: CropDocColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, size: 20, color: CropDocColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => launchUrl(Uri.parse('tel:$phone')),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: CropDocColors.safe,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.call_rounded, size: 16, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(phone, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                ],
               ),
             ),
           ),

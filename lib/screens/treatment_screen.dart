@@ -4,6 +4,7 @@ import '../config/theme.dart';
 import '../config/app_language.dart';
 import '../data/treatment_database.dart';
 import '../services/scan_history_service.dart';
+import '../services/farm_log_service.dart';
 import '../widgets/common/listen_fab.dart';
 import '../widgets/treatment/step_card.dart';
 import '../widgets/treatment/shop_card.dart';
@@ -14,17 +15,24 @@ class TreatmentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Read disease from latest prediction
-    final prediction = ScanHistoryService.instance.lastPrediction;
+    return ListenableBuilder(
+      listenable: FarmLogService.instance,
+      builder: (context, _) {
+        // Read disease from latest prediction
+        final prediction = ScanHistoryService.instance.lastPrediction;
 
-    final diseaseName = prediction?.diseaseName ?? 'Early Blight';
-    final cropName = prediction?.cropName ?? 'Tomato';
-    final isHealthy = prediction?.isHealthy ?? false;
+        final diseaseName = prediction?.diseaseName ?? 'Early Blight';
+        final cropName = prediction?.cropName ?? 'Tomato';
+        final isHealthy = prediction?.isHealthy ?? false;
 
-    // Get disease-specific data
-    final steps = TreatmentDatabase.getSteps(diseaseName);
-    final shops = TreatmentDatabase.getShops(diseaseName);
-    final schedule = TreatmentDatabase.getSchedule(diseaseName);
+        // Get disease-specific data
+        final steps = TreatmentDatabase.getSteps(diseaseName);
+        final shops = TreatmentDatabase.getShops(diseaseName);
+        final schedule = TreatmentDatabase.getSchedule(
+          diseaseName,
+          cropName: cropName,
+          logs: FarmLogService.instance.records,
+        );
 
     final speechText = isHealthy
         ? 'Your $cropName plant is healthy. No treatment needed. Next check in 7 days.'
@@ -202,6 +210,8 @@ class TreatmentScreen extends StatelessWidget {
           child: ListenFab(speechText: speechText),
         ),
       ],
+    );
+      },
     );
   }
 }
