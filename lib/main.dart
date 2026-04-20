@@ -12,7 +12,7 @@ import 'screens/onboarding_screen.dart';
 import 'widgets/layout/bottom_nav_bar.dart';
 import 'widgets/common/connectivity_banner.dart';
 import 'services/model_service.dart';
-import 'services/scan_history_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,9 +107,7 @@ class _CropDocShellState extends State<CropDocShell> {
       language: _language,
       onLanguageChanged: _setLanguage,
       child: Scaffold(
-        backgroundColor: _currentTab == 0
-            ? CropDocColors.darkSurface
-            : CropDocColors.background,
+        backgroundColor: CropDocColors.background,
         body: Column(
           children: [
             // Offline/syncing banner
@@ -138,14 +136,10 @@ class _CropDocShellState extends State<CropDocShell> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: _currentTab == 0
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : CropDocColors.primary.withValues(alpha: 0.08),
+                              color: CropDocColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: _currentTab == 0
-                                    ? Colors.white.withValues(alpha: 0.3)
-                                    : CropDocColors.primary.withValues(alpha: 0.2),
+                                color: CropDocColors.primary.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Icon(
@@ -153,7 +147,7 @@ class _CropDocShellState extends State<CropDocShell> {
                                   ? Icons.light_mode_rounded
                                   : Icons.dark_mode_rounded,
                               size: 16,
-                              color: _currentTab == 0 ? Colors.white : CropDocColors.primary,
+                              color: CropDocColors.primary,
                             ),
                           ),
                         ),
@@ -164,26 +158,22 @@ class _CropDocShellState extends State<CropDocShell> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _currentTab == 0
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : CropDocColors.primary.withValues(alpha: 0.08),
+                              color: CropDocColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: _currentTab == 0
-                                    ? Colors.white.withValues(alpha: 0.3)
-                                    : CropDocColors.primary.withValues(alpha: 0.2),
+                                color: CropDocColors.primary.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.translate_rounded, size: 16,
-                                  color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
+                                const Icon(Icons.translate_rounded, size: 16,
+                                  color: CropDocColors.primary),
                                 const SizedBox(width: 5),
                                 Text(
                                   _language.toUpperCase(),
                                   style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600,
-                                    color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
+                                    color: CropDocColors.primary),
                                 ),
                               ],
                             ),

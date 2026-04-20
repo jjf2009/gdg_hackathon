@@ -3,13 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import '../config/theme.dart';
-import '../config/app_language.dart';
+
+import '../models/weather_info.dart';
 import '../data/dummy_weather.dart';
-import '../widgets/common/weather_banner.dart';
-import '../widgets/scan/scan_button.dart';
+import '../widgets/common/weather_dashboard.dart';
+
 import '../widgets/scan/scan_overlay.dart';
 import '../services/scan_history_service.dart';
 import '../services/model_service.dart';
+import '../services/weather_service.dart';
 import '../models/scan_record.dart';
 import '../models/farm_log.dart';
 import '../services/farm_log_service.dart';
@@ -36,10 +38,41 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final TextEditingController _noteController = TextEditingController();
 
+  // Weather state
+  LiveWeatherData? _weatherData;
+  bool _weatherLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadWeather({bool force = false}) async {
+    setState(() => _weatherLoading = true);
+    try {
+      final data = await WeatherService.instance.getWeather(forceRefresh: force);
+      if (mounted) {
+        setState(() {
+          _weatherData = data;
+          _weatherLoading = false;
+        });
+      }
+    } catch (_) {
+      // Use dummy fallback
+      if (mounted) {
+        setState(() {
+          _weatherData = DummyWeather.current;
+          _weatherLoading = false;
+        });
+      }
+    }
   }
 
   void _startScan() {
@@ -65,7 +98,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _scanning = true);
       }
     } catch (e) {
-      // If camera/gallery fails, still demo the scan
       if (mounted) {
         _pickedImagePath = null;
         setState(() => _scanning = true);
@@ -74,12 +106,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onScanDone() async {
-    // Run model if image was picked and model is loaded
     ModelPrediction prediction;
     if (_pickedImagePath != null && ModelService.isAvailable) {
       prediction = await ModelService.predict(_pickedImagePath!);
     } else {
-      // Fallback demo prediction
       prediction = const ModelPrediction(
         rawLabel: 'Tomato___Early_blight',
         cropName: 'Tomato',
@@ -88,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Save to history
     ScanHistoryService.instance.addScan(ScanRecord(
       date: DateTime.now(),
       cropName: prediction.cropName,
@@ -98,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
       imagePath: _pickedImagePath ?? 'assets/images/early_blight_leaf.png',
     ));
 
-    // Store latest prediction globally so Result screen can read it
     ScanHistoryService.instance.lastPrediction = prediction;
 
     setState(() => _scanning = false);
@@ -438,51 +466,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final weather = DummyWeather.current;
-
-    return Stack(
-      children: [
-        // Clean background matching overall theme
-        Container(
-          color: CropDocColors.background,
+  Widget _buildWeatherSection() {
+    if (_weatherLoading && _weatherData == null) {
+      // Loading shimmer
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B4332), Color(0xFF2D6A4F)],
+          ),
+          borderRadius: BorderRadius.circular(24),
         ),
-
-        // Scrollable Content
-        SafeArea(
+        child: const Center(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Keep top fixed banner natively out of the scrollable body so it's always at the top
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                child: WeatherBanner(
-                  icon: weather.icon,
-                  message: t(context, 'weather_msg'),
-                  riskLevel: weather.riskLevel,
-                ).animate().slideY(
-                      begin: -0.3,
-                      duration: 500.ms,
-                      curve: Curves.easeOutCubic,
-                    ).fadeIn(duration: 400.ms),
-              ),
-              
-              // Scrollable body to prevent 'Bottom Overflowed' during interactions
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildQuickFarmLogCard().animate().fadeIn(duration: 500.ms).slideY(begin: 0.1),
-                      const SizedBox(height: 28),
-                      _buildDiagnosticScanArea().animate().fadeIn(delay: 200.ms, duration: 500.ms).slideY(begin: 0.1),
-                    ],
-                  ),
-                ),
+              CircularProgressIndicator(color: Colors.white70, strokeWidth: 2.5),
+              SizedBox(height: 12),
+              Text(
+                'Fetching weather...',
+                style: TextStyle(color: Colors.white60, fontSize: 13),
               ),
             ],
+          ),
+        ),
+      );
+    }
+
+    final data = _weatherData ?? DummyWeather.current;
+    return WeatherDashboard(
+      weather: data,
+      onRefresh: () => _loadWeather(force: true),
+      isLoading: _weatherLoading,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Clean background
+        Container(color: CropDocColors.background),
+
+        // Scrollable Content — dashboard first, then scan & log
+        SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Section 1: Weather Dashboard ──
+                _buildWeatherSection(),
+                const SizedBox(height: 28),
+
+                // ── Section 2: Diagnostic Scan ──
+                _buildDiagnosticScanArea()
+                    .animate()
+                    .fadeIn(delay: 500.ms, duration: 500.ms)
+                    .slideY(begin: 0.1),
+                const SizedBox(height: 28),
+
+                // ── Section 3: Quick Farm Log ──
+                _buildQuickFarmLogCard()
+                    .animate()
+                    .fadeIn(delay: 600.ms, duration: 500.ms)
+                    .slideY(begin: 0.1),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
 
