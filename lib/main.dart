@@ -25,6 +25,7 @@ import 'services/intent_service.dart';
 import 'services/groq_service.dart';
 import 'services/navigation_service.dart';
 import 'services/segmentation_service.dart';
+import 'services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ void main() async {
 
   // Initialize voice services
   GroqService().initialize();
+  await SupabaseService().initialize();
 
   runApp(const CropDocApp());
 }

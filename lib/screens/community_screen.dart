@@ -9,6 +9,8 @@ import '../services/scan_history_service.dart';
 import '../models/community_alert.dart';
 import '../widgets/community/disease_map.dart';
 import '../widgets/community/alert_card.dart';
+import '../services/supabase_service.dart';
+import '../services/groq_service.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -73,27 +75,167 @@ class _CommunityScreenState extends State<CommunityScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) => _DetailedReportSheet(
-        onSubmit: (reportData) {
-          // Create a community alert from the detailed report
-          setState(() => _userReports.insert(0, CommunityAlert(
-            farmerName: reportData['farmer_name'] ?? t(context, 'you'),
-            villageName: reportData['location'] ?? 'Unknown',
-            diseaseName: reportData['suspected_disease'] ?? 'Unknown',
-            cropName: reportData['crop_name'] ?? 'Unknown',
-            distanceKm: 0.0,
-            reportedAt: DateTime.now(),
-            mapX: 0.48, mapY: 0.45,
-            severity: CropDocColors.danger,
-          )));
-          Navigator.pop(ctx);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(t(context, 'report_submitted')),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: CropDocColors.safe,
-            ),
-          );
+        onSubmit: (reportData) async {
+          Navigator.pop(ctx); // Close the form
+          
+          // Show processing indicator
+          _showProcessingDialog();
+          
+          try {
+            // 1. Save to Supabase (Community Feed)
+            await SupabaseService().saveReport(reportData);
+            
+            // 2. RAG Pipeline: Search context
+            final query = "${reportData['crop_name']} ${reportData['symptom_description']}";
+            final contextData = await SupabaseService().searchContext(query);
+            
+            // 3. Get AI Response from Groq
+            final aiResponse = await GroqService().getRagResponse(
+              userQuery: "Help me diagnose and treat this: $query. Symptoms: ${reportData['symptom_description']}",
+              context: contextData,
+              lang: Localizations.localeOf(context).languageCode,
+            );
+            
+            // Close processing dialog
+            if (mounted) Navigator.pop(context);
+            
+            // 4. Show AI Result
+            if (aiResponse != null && mounted) {
+              _showAiResultSheet(reportData, aiResponse);
+            }
+            
+            // Add to local list for immediate UI update
+            setState(() => _userReports.insert(0, CommunityAlert(
+              farmerName: reportData['farmer_name'] ?? t(context, 'you'),
+              villageName: reportData['location'] ?? 'Unknown',
+              diseaseName: reportData['suspected_disease'] ?? 'Unknown',
+              cropName: reportData['crop_name'] ?? 'Unknown',
+              distanceKm: 0.0,
+              reportedAt: DateTime.now(),
+              mapX: 0.48, mapY: 0.45,
+              severity: CropDocColors.danger,
+            )));
+            
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context); // Close dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+              );
+            }
+          }
         },
+      ),
+    );
+  }
+
+  void _showProcessingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: CropDocColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: CropDocColors.primary),
+            const SizedBox(height: 20),
+            Text(
+              'AI analyzing your report...',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Retrieving local data & generating advice',
+              style: GoogleFonts.outfit(fontSize: 12, color: CropDocColors.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAiResultSheet(Map<String, String> reportData, String aiResponse) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: CropDocColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(width: 40, height: 4, 
+                decoration: BoxDecoration(color: CropDocColors.divider, borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: CropDocColors.primary, size: 28),
+                const SizedBox(width: 12),
+                Text('AI Advisor Analysis', style: Theme.of(context).textTheme.headlineSmall),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: CropDocColors.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: CropDocColors.primary.withValues(alpha: 0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Report Summary', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text('Crop: ${reportData['crop_name']}'),
+                          Text('Suspected: ${reportData['suspected_disease']}'),
+                          Text('Symptoms: ${reportData['symptom_description']}'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Recommendation', 
+                        style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: CropDocColors.primary)),
+                    const SizedBox(height: 12),
+                    Text(
+                      aiResponse,
+                      style: GoogleFonts.outfit(fontSize: 15, height: 1.5),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CropDocColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Got it!'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

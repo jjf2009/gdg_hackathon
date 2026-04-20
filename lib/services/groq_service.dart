@@ -174,6 +174,64 @@ Always call exactly one tool. If you cannot determine the intent, call open_page
     }
   }
 
+  /// Get a RAG-based response from Groq using retrieved context.
+  Future<String?> getRagResponse({
+    required String userQuery,
+    required List<Map<String, dynamic>> context,
+    required String lang,
+  }) async {
+    if (!_isAvailable) return 'AI services are currently unavailable.';
+
+    final contextText = context.map((c) => 
+      'Crop: ${c['crop_name']}\n'
+      'Disease: ${c['disease_name']}\n'
+      'Symptoms: ${c['symptoms']}\n'
+      'Treatment: ${c['treatment']}'
+    ).join('\n\n');
+
+    final systemPrompt = '''You are CropDoc AI, an expert agricultural advisor. 
+Use the following retrieved context to answer the farmer's query. 
+If the context doesn't contain the answer, use your general knowledge but prioritize the context.
+Provide practical, easy-to-follow advice in $lang.
+
+Context:
+$contextText''';
+
+    final body = json.encode({
+      'model': _model,
+      'messages': [
+        {'role': 'system', 'content': systemPrompt},
+        {'role': 'user', 'content': userQuery},
+      ],
+      'temperature': 0.3,
+      'max_tokens': 1024,
+    });
+
+    final client = HttpClient();
+    try {
+      final request = await client.postUrl(Uri.parse(_baseUrl));
+      request.headers.set('Authorization', 'Bearer $_apiKey');
+      request.headers.set('Content-Type', 'application/json');
+      request.write(body);
+
+      final response = await request.close();
+      final responseBody = await response.transform(utf8.decoder).join();
+
+      if (response.statusCode != 200) {
+        print('Groq RAG API error: ${response.statusCode}');
+        return null;
+      }
+
+      final data = json.decode(responseBody);
+      return data['choices'][0]['message']['content'];
+    } catch (e) {
+      print('Groq RAG error: $e');
+      return null;
+    } finally {
+      client.close();
+    }
+  }
+
   /// Parse Groq tool-call response into a VoiceIntent.
   VoiceIntent? _parseToolCallResponse(String responseBody, String originalText) {
     try {
