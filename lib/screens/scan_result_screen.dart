@@ -10,6 +10,7 @@ import '../widgets/common/health_badge.dart';
 import '../widgets/common/listen_fab.dart';
 import '../widgets/scan/confidence_meter.dart';
 import '../widgets/scan/recovery_slider.dart';
+import '../widgets/scan/mask_overlay.dart';
 
 class ScanResultScreen extends StatelessWidget {
   final VoidCallback onViewTreatment;
@@ -152,6 +153,12 @@ class ScanResultScreen extends StatelessWidget {
                         .slideY(begin: 0.05, duration: 400.ms),
                     const SizedBox(height: 28),
 
+                    // Disease segmentation map
+                    if (!isHealthy) ...[
+                      MaskOverlay(imagePath: imagePath),
+                      const SizedBox(height: 20),
+                    ],
+
                     if (!isHealthy) ...[
                       SizedBox(
                         width: double.infinity,
@@ -214,15 +221,15 @@ class ScanResultScreen extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    if (!isHealthy) ...[
-                      // Before/After recovery slider
-                      RecoverySlider(
-                        beforeImage: imagePath,
-                        afterImage: 'assets/images/healthy_leaf.png',
-                      ).animate()
-                          .fadeIn(delay: 800.ms, duration: 400.ms)
-                          .slideY(begin: 0.1, duration: 400.ms),
-                    ],
+                    // if (!isHealthy) ...[
+                    //   // Before/After recovery slider
+                    //   RecoverySlider(
+                    //     beforeImage: imagePath,
+                    //     afterImage: 'assets/images/healthy_leaf.png',
+                    //   ).animate()
+                    //       .fadeIn(delay: 800.ms, duration: 400.ms)
+                    //       .slideY(begin: 0.1, duration: 400.ms),
+                    // ],
 
                     if (isHealthy) ...[
                       Container(
@@ -267,7 +274,7 @@ class ScanResultScreen extends StatelessWidget {
           ],
         ),
         Positioned(
-          bottom: 24,
+          bottom: 96,
           right: 20,
           child: ListenFab(speechText: speechText),
         ),

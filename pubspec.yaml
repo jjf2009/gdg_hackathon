@@ -18,6 +18,11 @@ dependencies:
   tflite_flutter: ^0.11.0
   image: ^4.5.3
   url_launcher: ^6.3.1
+  # Voice interface dependencies
+  speech_to_text: ^7.3.0
+  flutter_dotenv: ^5.2.1
+  shared_preferences: ^2.5.5
+  connectivity_plus: ^5.0.0
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +35,8 @@ flutter:
   assets:
     - assets/images/
     - assets/model/
+    - assets/lang/
+    - .env
 
   fonts:
     - family: Outfit

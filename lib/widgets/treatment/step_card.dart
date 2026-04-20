@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
+import '../../config/app_language.dart';
 
 class StepCard extends StatefulWidget {
   final IconData icon;
@@ -131,7 +132,7 @@ class _StepCardState extends State<StepCard> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        _completed ? '✓ Done' : widget.urgencyLabel,
+                        _completed ? '✓ ${t(context, 'step_done')}' : widget.urgencyLabel,
                         style: GoogleFonts.outfit(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,

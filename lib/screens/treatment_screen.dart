@@ -168,7 +168,7 @@ class TreatmentScreen extends StatelessWidget {
                       const Spacer(),
                       const Icon(Icons.location_on_rounded, size: 16, color: CropDocColors.textMuted),
                       const SizedBox(width: 4),
-                      Text('Baramati', style: Theme.of(context).textTheme.bodySmall),
+                      Text(t(context, 'treatment_baramati'), style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -206,7 +206,7 @@ class TreatmentScreen extends StatelessWidget {
         ),
 
         Positioned(
-          bottom: 24, right: 20,
+          bottom: 96, right: 20,
           child: ListenFab(speechText: speechText),
         ),
       ],
