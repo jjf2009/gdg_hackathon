@@ -66,6 +66,38 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
+  void _showSubmitReportSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (ctx) => _DetailedReportSheet(
+        onSubmit: (reportData) {
+          // Create a community alert from the detailed report
+          setState(() => _userReports.insert(0, CommunityAlert(
+            farmerName: reportData['farmer_name'] ?? t(context, 'you'),
+            villageName: reportData['location'] ?? 'Unknown',
+            diseaseName: reportData['suspected_disease'] ?? 'Unknown',
+            cropName: reportData['crop_name'] ?? 'Unknown',
+            distanceKm: 0.0,
+            reportedAt: DateTime.now(),
+            mapX: 0.48, mapY: 0.45,
+            severity: CropDocColors.danger,
+          )));
+          Navigator.pop(ctx);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(t(context, 'report_submitted')),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: CropDocColors.safe,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allAlerts = _allAlerts;
@@ -320,35 +352,71 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ],
         ),
 
-        // Report button FAB
+        // FAB row: Report Disease + Submit Report
         Positioned(
           bottom: 24, right: 20,
-          child: GestureDetector(
-            onTap: _showReportSheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: CropDocColors.danger,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: CropDocColors.danger.withValues(alpha: 0.35),
-                    blurRadius: 14, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.add_alert_rounded, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    t(context, 'report_disease'),
-                    style: GoogleFonts.outfit(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Submit Report button (new)
+              GestureDetector(
+                onTap: _showSubmitReportSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: CropDocColors.primary,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CropDocColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 14, offset: const Offset(0, 4)),
+                    ],
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.description_rounded, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Submit Report',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 10),
+              // Report Disease button (existing)
+              GestureDetector(
+                onTap: _showReportSheet,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: CropDocColors.danger,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CropDocColors.danger.withValues(alpha: 0.35),
+                        blurRadius: 14, offset: const Offset(0, 4)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.add_alert_rounded, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        t(context, 'report_disease'),
+                        style: GoogleFonts.outfit(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -613,6 +681,463 @@ class _HelplineCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Detailed report form — structured for RAG pipeline consumption
+class _DetailedReportSheet extends StatefulWidget {
+  final ValueChanged<Map<String, String>> onSubmit;
+  const _DetailedReportSheet({required this.onSubmit});
+
+  @override
+  State<_DetailedReportSheet> createState() => _DetailedReportSheetState();
+}
+
+class _DetailedReportSheetState extends State<_DetailedReportSheet> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final _farmerNameCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
+  final _symptomCtrl = TextEditingController();
+  final _treatmentTriedCtrl = TextEditingController();
+  final _daysOnsetCtrl = TextEditingController();
+  final _affectedAreaCtrl = TextEditingController();
+  final _additionalNotesCtrl = TextEditingController();
+
+  // Selectable values
+  String _selectedCrop = 'Tomato';
+  String _selectedGrowthStage = 'Vegetative';
+  String _selectedDisease = 'Unknown / Not Sure';
+  String _selectedWeather = 'Humid';
+  String _selectedSoilType = 'Loamy';
+  String _selectedIrrigation = 'Drip';
+  String _selectedSeverity = 'Moderate';
+
+  static const List<String> _crops = [
+    'Tomato', 'Potato', 'Wheat', 'Corn', 'Cotton', 'Soybean',
+    'Rice', 'Onion', 'Grape', 'Apple', 'Cherry', 'Pepper', 'Other',
+  ];
+
+  static const List<String> _growthStages = [
+    'Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Mature / Harvest',
+  ];
+
+  static const List<String> _diseases = [
+    'Unknown / Not Sure', 'Early Blight', 'Late Blight',
+    'Powdery Mildew', 'Bacterial Spot', 'Leaf Curl',
+    'Root Rot', 'Mosaic Virus', 'Black Rot', 'Leaf Scorch',
+    'Septoria Leaf Spot', 'Common Rust', 'Downy Mildew', 'Other',
+  ];
+
+  static const List<String> _weatherOptions = [
+    'Humid', 'Dry / Hot', 'Rainy', 'Foggy / Misty', 'Cold', 'Normal',
+  ];
+
+  static const List<String> _soilTypes = [
+    'Loamy', 'Sandy', 'Clay', 'Black Cotton Soil', 'Red Soil', 'Other',
+  ];
+
+  static const List<String> _irrigationTypes = [
+    'Drip', 'Flood', 'Sprinkler', 'Rain-fed', 'Manual Watering', 'None',
+  ];
+
+  static const List<String> _severityLevels = [
+    'Mild (few spots)', 'Moderate (spreading)', 'Severe (major damage)', 'Critical (plant dying)',
+  ];
+
+  @override
+  void dispose() {
+    _farmerNameCtrl.dispose();
+    _locationCtrl.dispose();
+    _symptomCtrl.dispose();
+    _treatmentTriedCtrl.dispose();
+    _daysOnsetCtrl.dispose();
+    _affectedAreaCtrl.dispose();
+    _additionalNotesCtrl.dispose();
+    super.dispose();
+  }
+
+  void _handleSubmit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final data = <String, String>{
+      'farmer_name': _farmerNameCtrl.text.trim(),
+      'location': _locationCtrl.text.trim(),
+      'crop_name': _selectedCrop,
+      'growth_stage': _selectedGrowthStage,
+      'suspected_disease': _selectedDisease,
+      'symptom_description': _symptomCtrl.text.trim(),
+      'severity': _selectedSeverity,
+      'affected_area_percent': _affectedAreaCtrl.text.trim(),
+      'days_since_onset': _daysOnsetCtrl.text.trim(),
+      'weather_conditions': _selectedWeather,
+      'soil_type': _selectedSoilType,
+      'irrigation_type': _selectedIrrigation,
+      'treatments_tried': _treatmentTriedCtrl.text.trim(),
+      'additional_notes': _additionalNotesCtrl.text.trim(),
+      'submitted_at': DateTime.now().toIso8601String(),
+    };
+
+    widget.onSubmit(data);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.92,
+      decoration: const BoxDecoration(
+        color: CropDocColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar + header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(width: 40, height: 4,
+                    decoration: BoxDecoration(color: CropDocColors.divider, borderRadius: BorderRadius.circular(2))),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: CropDocColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.description_rounded, color: CropDocColors.primary, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Submit Detailed Report',
+                            style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700,
+                              color: CropDocColors.textPrimary)),
+                          Text('Complete field observation for expert analysis',
+                            style: GoogleFonts.outfit(fontSize: 12, color: CropDocColors.textMuted)),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.close_rounded, color: CropDocColors.textMuted, size: 24),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: CropDocColors.divider),
+              ],
+            ),
+          ),
+          // Scrollable form
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Section: Basic Info ──
+                    _sectionHeader(Icons.person_outline_rounded, 'Basic Information'),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _farmerNameCtrl,
+                      label: 'Your Name',
+                      hint: 'E.g., Ramesh Kumar',
+                      icon: Icons.badge_outlined,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _locationCtrl,
+                      label: 'Village / Location',
+                      hint: 'E.g., Baramati, Pune District',
+                      icon: Icons.location_on_outlined,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Location is required' : null,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Section: Crop Details ──
+                    _sectionHeader(Icons.grass_rounded, 'Crop Details'),
+                    const SizedBox(height: 12),
+                    _buildChipSelector(
+                      label: 'Crop',
+                      options: _crops,
+                      selected: _selectedCrop,
+                      onSelect: (v) => setState(() => _selectedCrop = v),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildChipSelector(
+                      label: 'Growth Stage',
+                      options: _growthStages,
+                      selected: _selectedGrowthStage,
+                      onSelect: (v) => setState(() => _selectedGrowthStage = v),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Section: Disease Observation ──
+                    _sectionHeader(Icons.biotech_rounded, 'Disease Observation'),
+                    const SizedBox(height: 12),
+                    _buildChipSelector(
+                      label: 'Suspected Disease',
+                      options: _diseases,
+                      selected: _selectedDisease,
+                      onSelect: (v) => setState(() => _selectedDisease = v),
+                      color: CropDocColors.danger,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildChipSelector(
+                      label: 'Severity Level',
+                      options: _severityLevels,
+                      selected: _selectedSeverity,
+                      onSelect: (v) => setState(() => _selectedSeverity = v),
+                      color: CropDocColors.warning,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _symptomCtrl,
+                      label: 'Describe Symptoms in Detail',
+                      hint: 'E.g., Brown circular spots with concentric rings on lower leaves. Yellowing around spots spreading upward. Some leaves wilting...',
+                      icon: Icons.edit_note_rounded,
+                      maxLines: 5,
+                      validator: (v) => (v == null || v.trim().length < 10) ? 'Please describe symptoms (min 10 chars)' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _affectedAreaCtrl,
+                            label: 'Affected Area (%)',
+                            hint: 'E.g., 30',
+                            icon: Icons.pie_chart_outline_rounded,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _daysOnsetCtrl,
+                            label: 'Days Since Onset',
+                            hint: 'E.g., 5',
+                            icon: Icons.calendar_today_rounded,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Section: Environment ──
+                    _sectionHeader(Icons.cloud_outlined, 'Environmental Conditions'),
+                    const SizedBox(height: 12),
+                    _buildChipSelector(
+                      label: 'Recent Weather',
+                      options: _weatherOptions,
+                      selected: _selectedWeather,
+                      onSelect: (v) => setState(() => _selectedWeather = v),
+                      color: const Color(0xFF3B82F6),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildChipSelector(
+                      label: 'Soil Type',
+                      options: _soilTypes,
+                      selected: _selectedSoilType,
+                      onSelect: (v) => setState(() => _selectedSoilType = v),
+                      color: const Color(0xFF92400E),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildChipSelector(
+                      label: 'Irrigation Method',
+                      options: _irrigationTypes,
+                      selected: _selectedIrrigation,
+                      onSelect: (v) => setState(() => _selectedIrrigation = v),
+                      color: const Color(0xFF0891B2),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Section: Treatments ──
+                    _sectionHeader(Icons.medication_rounded, 'Treatments Already Tried'),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _treatmentTriedCtrl,
+                      label: 'What have you tried so far?',
+                      hint: 'E.g., Sprayed Mancozeb 2 days ago, removed affected leaves, applied neem oil...',
+                      icon: Icons.science_outlined,
+                      maxLines: 3,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Section: Additional Notes ──
+                    _sectionHeader(Icons.sticky_note_2_outlined, 'Additional Notes'),
+                    const SizedBox(height: 12),
+                    _buildTextField(
+                      controller: _additionalNotesCtrl,
+                      label: 'Any other observations',
+                      hint: 'E.g., Same issue seen in neighbouring fields. Using organic fertilizer. Crops were transplanted 45 days ago...',
+                      icon: Icons.notes_rounded,
+                      maxLines: 3,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Submit button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: _handleSubmit,
+                        icon: const Icon(Icons.send_rounded, size: 20),
+                        label: Text('Submit Report',
+                          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: CropDocColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: CropDocColors.primary),
+        const SizedBox(width: 8),
+        Text(title,
+          style: GoogleFonts.outfit(
+            fontSize: 16, fontWeight: FontWeight.w700,
+            color: CropDocColors.textPrimary, letterSpacing: -0.3)),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+          style: GoogleFonts.outfit(
+            fontSize: 13, fontWeight: FontWeight.w600,
+            color: CropDocColors.textSecondary, letterSpacing: 0.3)),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: GoogleFonts.outfit(fontSize: 14, color: CropDocColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.outfit(fontSize: 13, color: CropDocColors.textMuted),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
+              child: Icon(icon, size: 18, color: CropDocColors.textMuted),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            filled: true,
+            fillColor: CropDocColors.background,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: CropDocColors.divider),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: CropDocColors.divider),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: CropDocColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: CropDocColors.danger),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChipSelector({
+    required String label,
+    required List<String> options,
+    required String selected,
+    required ValueChanged<String> onSelect,
+    Color color = CropDocColors.primary,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+          style: GoogleFonts.outfit(
+            fontSize: 13, fontWeight: FontWeight.w600,
+            color: CropDocColors.textSecondary, letterSpacing: 0.3)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: options.map((opt) {
+            final isSelected = opt == selected;
+            return GestureDetector(
+              onTap: () => onSelect(opt),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected ? color : CropDocColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? color : CropDocColors.divider,
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
+                  boxShadow: isSelected ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.15),
+                      blurRadius: 6, offset: const Offset(0, 2)),
+                  ] : null,
+                ),
+                child: Text(opt,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : CropDocColors.textPrimary)),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }
