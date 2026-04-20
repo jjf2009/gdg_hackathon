@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import '../config/theme.dart';
+import '../config/app_language.dart';
 
 import '../models/weather_info.dart';
 import '../data/dummy_weather.dart';
