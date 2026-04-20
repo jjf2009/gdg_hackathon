@@ -135,25 +135,30 @@ class _CropDocShellState extends State<CropDocShell> {
                         GestureDetector(
                           onTap: () => AdvisorSheet.show(context),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: CropDocColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: CropDocColors.primary.withValues(alpha: 0.3),
-                              ),
+                              color: CropDocColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: CropDocColors.primary.withValues(alpha: 0.35),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.currency_rupee_rounded, size: 16, color: CropDocColors.primary),
+                                const Icon(Icons.currency_rupee_rounded, size: 16, color: Colors.white),
                                 const SizedBox(width: 4),
                                 Text(
                                   'FINANCE',
                                   style: GoogleFonts.outfit(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: CropDocColors.primary,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
@@ -165,24 +170,31 @@ class _CropDocShellState extends State<CropDocShell> {
                         GestureDetector(
                           onTap: _showLanguagePicker,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: CropDocColors.primary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: CropDocColors.primary.withValues(alpha: 0.2),
-                              ),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: CropDocColors.primaryDark.withValues(alpha: 0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                              border: Border.all(color: CropDocColors.divider, width: 1),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.translate_rounded, size: 16,
-                                  color: CropDocColors.primary),
-                                const SizedBox(width: 5),
+                                const Icon(Icons.translate_rounded, size: 16, color: CropDocColors.primary),
+                                const SizedBox(width: 6),
                                 Text(
                                   _language.toUpperCase(),
-                                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600,
-                                    color: CropDocColors.primary),
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12, 
+                                    fontWeight: FontWeight.w700,
+                                    color: CropDocColors.primary,
+                                  ),
                                 ),
                               ],
                             ),
