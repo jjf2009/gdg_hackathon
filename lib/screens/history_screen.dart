@@ -156,7 +156,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Icon(Icons.search_off_rounded, size: 48, color: CropDocColors.textMuted),
                         const SizedBox(height: 12),
-                        Text('No scans this season',
+                        Text(t(context, 'history_no_scans'),
                             style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
@@ -187,7 +187,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text("Action Logs",
+                Text(t(context, 'history_action_logs'),
                     style: Theme.of(context).textTheme.headlineSmall),
               ],
             ),
@@ -211,7 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Icon(Icons.edit_document, size: 48, color: CropDocColors.textMuted.withValues(alpha: 0.5)),
                         const SizedBox(height: 12),
-                        Text('No logs recorded yet',
+                        Text(t(context, 'history_no_logs'),
                             style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
@@ -410,7 +410,7 @@ class _SeasonToggle extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: ['Kharif', 'Rabi'].map((s) {
+        children: [t(context, 'season_kharif'), t(context, 'season_rabi')].map((s) {
           final isActive = selected == s;
           return GestureDetector(
             onTap: () => onChanged(s),

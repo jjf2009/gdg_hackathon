@@ -163,10 +163,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Icon(Icons.edit_document, color: CropDocColors.primary, size: 20),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Log Today's Action",
-                  style: TextStyle(
+                  t(context, 'home_log_action'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
@@ -177,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text(
-            "Target Crop",
-            style: TextStyle(
+          Text(
+            t(context, 'home_target_crop'),
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: CropDocColors.textSecondary,
@@ -228,9 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            "Action Type",
-            style: TextStyle(
+          Text(
+            t(context, 'home_action_type'),
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: CropDocColors.textSecondary,
@@ -279,9 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            "Quick Note",
-            style: TextStyle(
+          Text(
+            t(context, 'home_quick_note'),
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: CropDocColors.textSecondary,
@@ -298,12 +298,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: TextField(
               controller: _noteController,
-              decoration: const InputDecoration(
-                hintText: "E.g., Added 2kg of NPK...",
-                hintStyle: TextStyle(fontSize: 15, color: CropDocColors.textMuted),
+              decoration: InputDecoration(
+                hintText: t(context, 'home_note_hint'),
+                hintStyle: const TextStyle(fontSize: 15, color: CropDocColors.textMuted),
                 border: InputBorder.none,
-                prefixIcon: Icon(Icons.notes, color: CropDocColors.textMuted, size: 20),
-                prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 36),
+                prefixIcon: const Icon(Icons.notes, color: CropDocColors.textMuted, size: 20),
+                prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
               style: const TextStyle(fontSize: 15, color: CropDocColors.textPrimary),
             ),
@@ -326,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _noteController.clear();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Log saved successfully!'),
+                    content: Text(t(context, 'home_log_saved')),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -341,9 +341,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text(
-                "Save Log",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+              label: Text(
+                t(context, 'home_save_log'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5),
               ),
             ),
           ),
@@ -357,11 +357,11 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            "Diagnostic Scan",
-            style: TextStyle(
+            t(context, 'home_diagnostic_scan'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
@@ -401,9 +401,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Icon(Icons.photo_library_outlined, color: CropDocColors.primary, size: 24),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        "Gallery",
-                        style: TextStyle(
+                      Text(
+                        t(context, 'home_gallery'),
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: CropDocColors.textPrimary,
@@ -447,9 +447,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: const Icon(Icons.center_focus_strong_rounded, color: Colors.white, size: 24),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        "Take Photo",
-                        style: TextStyle(
+                      Text(
+                        t(context, 'home_take_photo'),
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,

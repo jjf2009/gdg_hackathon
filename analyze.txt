@@ -1,0 +1,51 @@
+Analyzing gdg_hackathon...                                      
+
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:166:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:167:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:302:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:303:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:438:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:439:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:572:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:573:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:706:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:707:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:840:7 • equal_keys_in_map
+warning • Two keys in a map literal shouldn't be equal • lib/config/app_language.dart:841:7 • equal_keys_in_map
+   info • Unnecessary braces in a string interpolation • lib/data/dummy_weather.dart:67:51 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation • lib/data/dummy_weather.dart:79:52 • unnecessary_brace_in_string_interps
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:83:29 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:84:40 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:85:40 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:86:37 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:87:38 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:88:38 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:89:65 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:90:38 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/data/treatment_database.dart:91:10 • curly_braces_in_flow_control_structures
+warning • Unused import: 'services/scan_history_service.dart' • lib/main.dart:20:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/main.dart:42:5 • avoid_print
+warning • Unused import: '../models/farm_log.dart' • lib/screens/history_screen.dart:12:8 • unused_import
+   info • Unnecessary use of multiple underscores • lib/screens/history_screen.dart:204:35 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/screens/history_screen.dart:227:41 • unnecessary_underscores
+warning • Unused import: '../widgets/scan/scan_button.dart' • lib/screens/home_screen.dart:9:8 • unused_import
+   info • Don't invoke 'print' in production code • lib/services/groq_service.dart:31:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/groq_service.dart:63:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/groq_service.dart:167:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/groq_service.dart:245:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/intent_service.dart:35:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/navigation_service.dart:45:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/stt_service.dart:67:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/stt_service.dart:108:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/stt_service.dart:123:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/stt_service.dart:134:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/stt_service.dart:164:5 • avoid_print
+warning • The value of the field '_currentLang' isn't used • lib/services/tts_service.dart:14:10 • unused_field
+   info • Don't invoke 'print' in production code • lib/services/tts_service.dart:56:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/tts_service.dart:67:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/services/tts_service.dart:91:7 • avoid_print
+   info • Unnecessary use of multiple underscores • lib/widgets/scan/recovery_slider.dart:26:27 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/widgets/scan/recovery_slider.dart:26:31 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/widgets/scan/recovery_slider.dart:29:25 • unnecessary_underscores
+   info • Unnecessary use of multiple underscores • lib/widgets/scan/recovery_slider.dart:29:29 • unnecessary_underscores
+

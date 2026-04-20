@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'config/theme.dart';
 import 'config/app_language.dart';
 import 'screens/home_screen.dart';
@@ -11,9 +14,17 @@ import 'screens/history_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'widgets/layout/bottom_nav_bar.dart';
 import 'widgets/common/connectivity_banner.dart';
+import 'widgets/common/voice_fab.dart';
+import 'widgets/common/voice_overlay.dart';
 import 'services/model_service.dart';
 import 'widgets/finance/advisor_sheet.dart';
-
+import 'services/scan_history_service.dart';
+import 'services/stt_service.dart';
+import 'services/tts_service.dart';
+import 'services/intent_service.dart';
+import 'services/groq_service.dart';
+import 'services/navigation_service.dart';
+import 'services/segmentation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,8 +36,21 @@ void main() async {
       systemNavigationBarColor: Colors.white,
     ),
   );
-  // Load TFLite model (fails silently if model files not present)
+
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    print('Could not load .env file: $e');
+  }
+
+  // Load TFLite models (fails silently if model files not present)
   await ModelService.load();
+  SegmentationService.instance.load(); // async, non-blocking
+
+  // Initialize voice services
+  GroqService().initialize();
+
   runApp(const CropDocApp());
 }
 
@@ -85,8 +109,204 @@ class _CropDocShellState extends State<CropDocShell> {
   int _currentTab = 0;
   String _language = 'en';
 
+  // Voice state
+  bool _isListening = false;
+  bool _isProcessing = false;
+  bool _showVoiceOverlay = false;
+  String _partialText = '';
+  String? _resultText;
+  String? _intentFeedback;
+  String? _errorText;
+
+  // Services
+  final SttService _stt = SttService();
+  final TtsService _tts = TtsService();
+  final IntentService _intentService = IntentService();
+  final GroqService _groq = GroqService();
+  final NavigationService _navService = NavigationService();
+
+  StreamSubscription? _sttPartialSub;
+  StreamSubscription? _sttResultSub;
+  StreamSubscription? _sttStateSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+    _initVoiceServices();
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('app_language');
+      if (saved != null && saved.isNotEmpty) {
+        setState(() => _language = saved);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveLanguage(String lang) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_language', lang);
+    } catch (_) {}
+  }
+
+  Future<void> _initVoiceServices() async {
+    await _tts.initialize();
+    await _intentService.loadKeywords();
+    await _navService.loadVoiceStrings();
+
+    // Wire navigation to tab switching
+    _navService.onTabSwitch = (tabIndex) {
+      setState(() => _currentTab = tabIndex);
+    };
+
+    // Listen to STT events
+    _sttPartialSub = _stt.onPartial.listen((partial) {
+      if (mounted) {
+        setState(() => _partialText = partial);
+      }
+    });
+
+    _sttResultSub = _stt.onResult.listen((result) {
+      if (mounted) {
+        _handleSttResult(result);
+      }
+    });
+
+    _sttStateSub = _stt.onStateChange.listen((state) {
+      if (mounted) {
+        switch (state) {
+          case SttState.noPermission:
+            setState(() {
+              _errorText = t(context, 'voice_no_mic');
+              _isListening = false;
+              _isProcessing = false;
+            });
+            break;
+          case SttState.error:
+            setState(() {
+              _errorText = t(context, 'voice_error');
+              _isListening = false;
+              _isProcessing = false;
+            });
+            break;
+          default:
+            break;
+        }
+      }
+    });
+  }
+
+  Future<void> _handleSttResult(SttResult result) async {
+    setState(() {
+      _resultText = result.text;
+      _isListening = false;
+      _isProcessing = true;
+      _partialText = '';
+    });
+
+    // Stop listening
+    await _stt.stopListening();
+
+    try {
+      // Parse intent (tries Groq first, falls back to offline)
+      final intent = await _groq.parseIntent(result.text, lang: _language);
+
+      // Execute navigation
+      final feedback = await _navService.executeIntent(intent);
+
+      if (mounted) {
+        setState(() {
+          _intentFeedback = feedback;
+          _isProcessing = false;
+        });
+
+        // Auto-dismiss after showing feedback
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _showVoiceOverlay = false;
+              _resultText = null;
+              _intentFeedback = null;
+              _errorText = null;
+            });
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorText = t(context, 'voice_error');
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  void _toggleVoice() async {
+    if (_isListening) {
+      // Stop listening
+      await _stt.stopListening();
+      setState(() {
+        _isListening = false;
+        _showVoiceOverlay = false;
+      });
+    } else {
+      // Start listening
+      setState(() {
+        _showVoiceOverlay = true;
+        _partialText = '';
+        _resultText = null;
+        _intentFeedback = null;
+        _errorText = null;
+      });
+
+      _navService.setLanguage(_language);
+      await _tts.setLanguage(_language);
+
+      final started = await _stt.startListening();
+      if (started) {
+        setState(() => _isListening = true);
+      } else {
+        setState(() {
+          _errorText = t(context, 'voice_no_mic');
+        });
+      }
+    }
+  }
+
+  void _retryVoice() {
+    setState(() {
+      _errorText = null;
+      _resultText = null;
+      _intentFeedback = null;
+    });
+    _toggleVoice();
+  }
+
+  void _dismissOverlay() {
+    _stt.stopListening();
+    setState(() {
+      _isListening = false;
+      _isProcessing = false;
+      _showVoiceOverlay = false;
+      _partialText = '';
+      _resultText = null;
+      _intentFeedback = null;
+      _errorText = null;
+    });
+  }
+
   void _goToTab(int index) => setState(() => _currentTab = index);
-  void _setLanguage(String lang) => setState(() => _language = lang);
+  void _setLanguage(String lang) {
+    setState(() => _language = lang);
+    _saveLanguage(lang);
+    _navService.setLanguage(lang);
+    _tts.setLanguage(lang);
+  }
 
   void _showLanguagePicker() {
     showModalBottomSheet(
@@ -100,6 +320,16 @@ class _CropDocShellState extends State<CropDocShell> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _sttPartialSub?.cancel();
+    _sttResultSub?.cancel();
+    _sttStateSub?.cancel();
+    _stt.dispose();
+    _tts.dispose();
+    super.dispose();
   }
 
   @override
@@ -203,10 +433,30 @@ class _CropDocShellState extends State<CropDocShell> {
                       ],
                     ),
                   ),
+
+                  // Voice overlay
+                  VoiceOverlay(
+                    isVisible: _showVoiceOverlay,
+                    isListening: _isListening,
+                    isProcessing: _isProcessing,
+                    partialText: _partialText,
+                    resultText: _resultText,
+                    intentFeedback: _intentFeedback,
+                    errorText: _errorText,
+                    onDismiss: _dismissOverlay,
+                    onRetry: _retryVoice,
+                    language: _language,
+                  ),
                 ],
               ),
             ),
           ],
+        ),
+        // Voice FAB
+        floatingActionButton: VoiceFab(
+          isListening: _isListening,
+          isProcessing: _isProcessing,
+          onPressed: _toggleVoice,
         ),
         bottomNavigationBar: BottomNavBar(
           currentIndex: _currentTab,
@@ -247,8 +497,9 @@ class _LanguageSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         children: [
           Container(width: 40, height: 4,
             decoration: BoxDecoration(color: CropDocColors.divider, borderRadius: BorderRadius.circular(2))),
@@ -287,6 +538,7 @@ class _LanguageSheet extends StatelessWidget {
             );
           }),
         ],
+      ),
       ),
     );
   }

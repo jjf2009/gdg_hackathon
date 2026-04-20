@@ -21,6 +21,11 @@ dependencies:
   http: ^1.2.0
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  # Voice interface dependencies
+  speech_to_text: ^7.3.0
+  flutter_dotenv: ^5.2.1
+  shared_preferences: ^2.5.5
+  connectivity_plus: ^5.0.0
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +38,8 @@ flutter:
   assets:
     - assets/images/
     - assets/model/
+    - assets/lang/
+    - .env
 
   fonts:
     - family: Outfit
