@@ -137,16 +137,16 @@ class _SprayCalendarState extends State<SprayCalendar> {
                           width: 36, height: 36,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: isToday ? color
+                            color: event?.isCompleted == true ? CropDocColors.safeLight : (isToday ? color
                                 : action == 'rest' ? CropDocColors.divider.withValues(alpha: 0.5)
-                                : color.withValues(alpha: 0.12),
-                            border: isToday ? Border.all(color: color, width: 2) : null,
-                            boxShadow: isToday && event?.isUrgent == true
+                                : color.withValues(alpha: 0.12)),
+                            border: isToday && !(event?.isCompleted == true) ? Border.all(color: color, width: 2) : null,
+                            boxShadow: isToday && event?.isUrgent == true && !(event?.isCompleted == true)
                                 ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8)]
                                 : null,
                           ),
-                          child: Icon(_iconFor(action), size: 16,
-                            color: isToday ? Colors.white : color),
+                          child: Icon(event?.isCompleted == true ? Icons.check_circle_rounded : _iconFor(action), size: 16,
+                            color: event?.isCompleted == true ? CropDocColors.safe : (isToday ? Colors.white : color)),
                         ),
                       ],
                     ),
@@ -178,13 +178,13 @@ class _SprayCalendarState extends State<SprayCalendar> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isPast
+                      color: isPast || event.isCompleted
                           ? CropDocColors.divider.withValues(alpha: 0.3)
                           : color.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isEventToday ? color : color.withValues(alpha: 0.15),
-                        width: isEventToday ? 1.5 : 0.5,
+                        color: isEventToday && !event.isCompleted ? color : color.withValues(alpha: 0.15),
+                        width: isEventToday && !event.isCompleted ? 1.5 : 0.5,
                       ),
                     ),
                     child: Row(
@@ -193,9 +193,9 @@ class _SprayCalendarState extends State<SprayCalendar> {
                           width: 36, height: 36,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: color.withValues(alpha: isPast ? 0.1 : 0.15),
+                            color: event.isCompleted ? CropDocColors.safe.withValues(alpha: 0.15) : color.withValues(alpha: isPast ? 0.1 : 0.15),
                           ),
-                          child: Icon(_iconFor(event.actionKey), size: 16, color: color),
+                          child: Icon(event.isCompleted ? Icons.check_circle_rounded : _iconFor(event.actionKey), size: 16, color: event.isCompleted ? CropDocColors.safe : color),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -205,24 +205,27 @@ class _SprayCalendarState extends State<SprayCalendar> {
                               Text(_actionLabel(event.actionKey),
                                 style: GoogleFonts.outfit(
                                   fontSize: 13, fontWeight: FontWeight.w600,
-                                  color: isPast ? CropDocColors.textMuted : CropDocColors.textPrimary,
-                                  decoration: isPast ? TextDecoration.lineThrough : null,
+                                  color: isPast || event.isCompleted ? CropDocColors.textMuted : CropDocColors.textPrimary,
+                                  decoration: isPast || event.isCompleted ? TextDecoration.lineThrough : null,
                                 )),
                               if (event.note != null)
                                 Text(event.note!, style: GoogleFonts.outfit(
-                                  fontSize: 11, color: CropDocColors.textMuted)),
+                                  fontSize: 11, color: event.isCompleted ? CropDocColors.safe : CropDocColors.textMuted),
+                                  maxLines: event.isCompleted ? 2 : 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                             ],
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isEventToday ? color.withValues(alpha: 0.15) : Colors.transparent,
+                            color: isEventToday && !event.isCompleted ? color.withValues(alpha: 0.15) : Colors.transparent,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(dayLabel, style: GoogleFonts.outfit(
                             fontSize: 11, fontWeight: FontWeight.w600,
-                            color: isEventToday ? color : CropDocColors.textMuted)),
+                            color: isEventToday && !event.isCompleted ? color : CropDocColors.textMuted)),
                         ),
                         if (event.isUrgent)
                           Padding(

@@ -9,6 +9,8 @@ import '../models/scan_record.dart';
 import '../widgets/history/crop_timeline.dart';
 import '../widgets/history/field_health_map.dart';
 import '../widgets/history/stat_card.dart';
+import '../models/farm_log.dart';
+import '../services/farm_log_service.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -167,6 +169,116 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     onRecordTap: _showRecordDetail,
                   ).animate().fadeIn(delay: 500.ms, duration: 500.ms),
                 ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+
+        // NEW: Farm Logs Section Title
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 4, height: 22,
+                  decoration: BoxDecoration(
+                    color: CropDocColors.secondary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text("Action Logs",
+                    style: Theme.of(context).textTheme.headlineSmall),
+              ],
+            ),
+          ),
+        ),
+
+        // NEW: Farm Logs List Builder
+        SliverToBoxAdapter(
+          child: ValueListenableBuilder<int>(
+            // We use a dummy builder trick or force update. Since HistoryScreen is rebuilt on tab change,
+            // we will just display FarmLogService.instance.records directly assuming it's freshly read.
+            // (If we needed reactive updates, a ChangeNotifier would be best. For now, it builds on load).
+            valueListenable: ValueNotifier(0), 
+            builder: (context, _, __) {
+              final logs = FarmLogService.instance.records;
+              if (logs.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.edit_document, size: 48, color: CropDocColors.textMuted.withValues(alpha: 0.5)),
+                        const SizedBox(height: 12),
+                        Text('No logs recorded yet',
+                            style: Theme.of(context).textTheme.bodyMedium),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: logs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) {
+                    final log = logs[i];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: CropDocColors.divider),
+                        boxShadow: [
+                          BoxShadow(
+                            color: CropDocColors.primaryDark.withValues(alpha: 0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: CropDocColors.safeLight,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(log.actionType, style: const TextStyle(color: CropDocColors.primary, fontWeight: FontWeight.bold, fontSize: 11)),
+                              ),
+                              const Spacer(),
+                              Text('${log.date.day.toString().padLeft(2, '0')}/${log.date.month.toString().padLeft(2, '0')}/${log.date.year}', 
+                                style: const TextStyle(color: CropDocColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(Icons.eco_rounded, size: 16, color: CropDocColors.secondary),
+                              const SizedBox(width: 6),
+                              Text(log.cropName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: CropDocColors.textPrimary)),
+                            ],
+                          ),
+                          if (log.note.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(log.note, style: const TextStyle(fontSize: 13, color: CropDocColors.textSecondary, height: 1.4)),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ).animate().fadeIn(delay: 500.ms, duration: 500.ms),
+              );
+            },
+          ),
         ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 80)),

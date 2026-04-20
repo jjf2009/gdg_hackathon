@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/treatment.dart';
 import '../models/calendar_event.dart';
+import '../models/farm_log.dart';
 
 /// Disease-specific treatment database.
 /// Maps model output disease names to actionable treatment plans.
@@ -54,20 +55,55 @@ class TreatmentDatabase {
   }
 
   /// Generate spray/treatment calendar based on disease
-  static List<CalendarEvent> getSchedule(String disease) {
+  static List<CalendarEvent> getSchedule(String disease, {String? cropName, List<FarmLog> logs = const []}) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    DateTime baseDate = DateTime(now.year, now.month, now.day);
+    
+    FarmLog? lastTreatment;
+    if (logs.isNotEmpty && cropName != null) {
+      final cropLogs = logs.where((l) => l.cropName == cropName).toList();
+      if (cropLogs.isNotEmpty) {
+        final sorted = List.from(cropLogs)..sort((a, b) => b.date.compareTo(a.date));
+        try {
+          lastTreatment = sorted.firstWhere(
+            (l) => ['pesticide', 'fertilizer', 'pruning', 'irrigation'].contains(l.actionType.toLowerCase())
+          );
+        } catch (e) {
+          lastTreatment = null;
+        }
+      }
+    }
+
+    if (lastTreatment != null) {
+      baseDate = DateTime(lastTreatment.date.year, lastTreatment.date.month, lastTreatment.date.day);
+    }
 
     final lower = disease.toLowerCase();
-    if (lower == 'healthy') return _healthySchedule(today);
-    if (lower.contains('blight')) return _blightSchedule(today, disease);
-    if (lower.contains('mildew')) return _mildewSchedule(today);
-    if (lower.contains('rot')) return _rotSchedule(today);
-    if (lower.contains('spot')) return _spotSchedule(today);
-    if (lower.contains('mold')) return _moldSchedule(today);
-    if (lower.contains('virus') || lower.contains('curl')) return _virusSchedule(today);
-    if (lower.contains('scab')) return _scabSchedule(today);
-    return _defaultSchedule(today, disease);
+    List<CalendarEvent> baseSchedule;
+    if (lower == 'healthy') baseSchedule = _healthySchedule(baseDate);
+    else if (lower.contains('blight')) baseSchedule = _blightSchedule(baseDate, disease);
+    else if (lower.contains('mildew')) baseSchedule = _mildewSchedule(baseDate);
+    else if (lower.contains('rot')) baseSchedule = _rotSchedule(baseDate);
+    else if (lower.contains('spot')) baseSchedule = _spotSchedule(baseDate);
+    else if (lower.contains('mold')) baseSchedule = _moldSchedule(baseDate);
+    else if (lower.contains('virus') || lower.contains('curl')) baseSchedule = _virusSchedule(baseDate);
+    else if (lower.contains('scab')) baseSchedule = _scabSchedule(baseDate);
+    else baseSchedule = _defaultSchedule(baseDate, disease);
+
+    if (lastTreatment != null) {
+      if (baseSchedule.isNotEmpty && baseSchedule.first.date.isAtSameMomentAs(baseDate)) {
+        final ev = baseSchedule.first;
+        baseSchedule[0] = CalendarEvent(
+          date: ev.date,
+          actionKey: ev.actionKey,
+          note: '${lastTreatment.actionType} completed${lastTreatment.note.isNotEmpty ? ': ${lastTreatment.note}' : ''}',
+          isUrgent: false,
+          isCompleted: true,
+        );
+      }
+    }
+
+    return baseSchedule;
   }
 
   // ─── Treatment Step Definitions ───

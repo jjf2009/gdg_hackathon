@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 
-class StepCard extends StatelessWidget {
+class StepCard extends StatefulWidget {
   final IconData icon;
   final String instruction;
   final String urgencyLabel;
@@ -19,10 +20,20 @@ class StepCard extends StatelessWidget {
   });
 
   @override
+  State<StepCard> createState() => _StepCardState();
+}
+
+class _StepCardState extends State<StepCard> {
+  bool _completed = false;
+
+  @override
   Widget build(BuildContext context) {
     Color urgencyColor;
-    switch (urgencyLabel.toLowerCase()) {
+    switch (widget.urgencyLabel.toLowerCase()) {
       case 'do today':
+        urgencyColor = CropDocColors.danger;
+        break;
+      case 'urgent':
         urgencyColor = CropDocColors.danger;
         break;
       case 'this week':
@@ -32,19 +43,25 @@ class StepCard extends StatelessWidget {
         urgencyColor = CropDocColors.primaryLight;
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       margin: EdgeInsets.only(
         bottom: 10,
-        left: index == 1 ? 4.0 : 0,
+        left: widget.index == 1 ? 4.0 : 0,
       ),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: CropDocColors.surfaceElevated,
+        color: _completed
+            ? CropDocColors.safeLight.withValues(alpha: 0.5)
+            : CropDocColors.surfaceElevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CropDocColors.divider, width: 0.5),
+        border: Border.all(
+          color: _completed ? CropDocColors.safe.withValues(alpha: 0.4) : CropDocColors.divider,
+          width: _completed ? 1.2 : 0.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: CropDocColors.textPrimary.withValues(alpha: 0.03),
+            color: CropDocColors.textPrimary.withValues(alpha: _completed ? 0.01 : 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -53,18 +70,28 @@ class StepCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: CropDocColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Center(
-              child: Icon(
-                icon,
-                size: 20,
-                color: CropDocColors.primary,
+          // Completion checkbox
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              setState(() => _completed = !_completed);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: _completed
+                    ? CropDocColors.safe
+                    : CropDocColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Center(
+                child: Icon(
+                  _completed ? Icons.check_rounded : widget.icon,
+                  size: 20,
+                  color: _completed ? Colors.white : CropDocColors.primary,
+                ),
               ),
             ),
           ),
@@ -74,37 +101,45 @@ class StepCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  instruction,
+                  widget.instruction,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         height: 1.35,
+                        decoration: _completed ? TextDecoration.lineThrough : null,
+                        color: _completed ? CropDocColors.textMuted : null,
                       ),
                 ),
-                if (detail != null) ...[
+                if (widget.detail != null) ...[
                   const SizedBox(height: 6),
                   Text(
-                    detail!,
+                    widget.detail!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 13,
                           height: 1.4,
+                          color: _completed ? CropDocColors.textMuted : null,
                         ),
                   ),
                 ],
                 const SizedBox(height: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: urgencyColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    urgencyLabel,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: urgencyColor,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _completed
+                            ? CropDocColors.safe.withValues(alpha: 0.1)
+                            : urgencyColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        _completed ? '✓ Done' : widget.urgencyLabel,
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _completed ? CropDocColors.safe : urgencyColor,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),

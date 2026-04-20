@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/theme.dart';
 import '../../config/app_language.dart';
+import '../../services/scan_history_service.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -65,6 +66,7 @@ class BottomNavBar extends StatelessWidget {
                 label: t(context, 'nav_history'),
                 isActive: currentIndex == 4,
                 onTap: () => onTap(4),
+                badgeCount: ScanHistoryService.instance.records.length,
               ),
             ],
           ),
@@ -79,12 +81,14 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -108,7 +112,29 @@ class _NavItem extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: isActive ? 26 : 24),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: color, size: isActive ? 26 : 24),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -4, right: -8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: CropDocColors.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 14),
+                        child: Text(
+                          '$badgeCount',
+                          style: GoogleFonts.outfit(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 3),
             Text(

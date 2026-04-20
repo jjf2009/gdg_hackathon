@@ -8,9 +8,11 @@ import 'screens/scan_result_screen.dart';
 import 'screens/treatment_screen.dart';
 import 'screens/community_screen.dart';
 import 'screens/history_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'widgets/layout/bottom_nav_bar.dart';
 import 'widgets/common/connectivity_banner.dart';
 import 'services/model_service.dart';
+import 'services/scan_history_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,22 +29,52 @@ void main() async {
   runApp(const CropDocApp());
 }
 
-class CropDocApp extends StatelessWidget {
+class CropDocApp extends StatefulWidget {
   const CropDocApp({super.key});
 
   @override
+  State<CropDocApp> createState() => _CropDocAppState();
+}
+
+class _CropDocAppState extends State<CropDocApp> {
+  bool _showOnboarding = true;
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_showOnboarding) {
+      return MaterialApp(
+        title: 'CropDoc',
+        debugShowCheckedModeBanner: false,
+        theme: CropDocTheme.lightTheme,
+        darkTheme: CropDocTheme.darkTheme,
+        themeMode: _themeMode,
+        home: OnboardingScreen(
+          onComplete: () => setState(() => _showOnboarding = false),
+        ),
+      );
+    }
     return MaterialApp(
       title: 'CropDoc',
       debugShowCheckedModeBanner: false,
       theme: CropDocTheme.lightTheme,
-      home: const CropDocShell(),
+      darkTheme: CropDocTheme.darkTheme,
+      themeMode: _themeMode,
+      home: CropDocShell(onToggleTheme: _toggleTheme, themeMode: _themeMode),
     );
   }
 }
 
 class CropDocShell extends StatefulWidget {
-  const CropDocShell({super.key});
+  final VoidCallback onToggleTheme;
+  final ThemeMode themeMode;
+  const CropDocShell({super.key, required this.onToggleTheme, required this.themeMode});
 
   @override
   State<CropDocShell> createState() => _CropDocShellState();
@@ -93,39 +125,71 @@ class _CropDocShellState extends State<CropDocShell> {
                         FadeTransition(opacity: animation, child: child),
                     child: _buildScreen(),
                   ),
-                  // Language selector pill
+                  // Language selector pill + Dark mode toggle
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 10,
                     right: 16,
-                    child: GestureDetector(
-                      onTap: _showLanguagePicker,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _currentTab == 0
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : CropDocColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: _currentTab == 0
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : CropDocColors.primary.withValues(alpha: 0.2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Dark mode toggle
+                        GestureDetector(
+                          onTap: widget.onToggleTheme,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _currentTab == 0
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : CropDocColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _currentTab == 0
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : CropDocColors.primary.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Icon(
+                              widget.themeMode == ThemeMode.dark
+                                  ? Icons.light_mode_rounded
+                                  : Icons.dark_mode_rounded,
+                              size: 16,
+                              color: _currentTab == 0 ? Colors.white : CropDocColors.primary,
+                            ),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.translate_rounded, size: 16,
-                              color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
-                            const SizedBox(width: 5),
-                            Text(
-                              _language.toUpperCase(),
-                              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600,
-                                color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
+                        const SizedBox(width: 8),
+                        // Language picker
+                        GestureDetector(
+                          onTap: _showLanguagePicker,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _currentTab == 0
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : CropDocColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: _currentTab == 0
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : CropDocColors.primary.withValues(alpha: 0.2),
+                              ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.translate_rounded, size: 16,
+                                  color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _language.toUpperCase(),
+                                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600,
+                                    color: _currentTab == 0 ? Colors.white : CropDocColors.primary),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],

@@ -11,6 +11,8 @@ import '../widgets/scan/scan_overlay.dart';
 import '../services/scan_history_service.dart';
 import '../services/model_service.dart';
 import '../models/scan_record.dart';
+import '../models/farm_log.dart';
+import '../services/farm_log_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onScanComplete;
@@ -25,6 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _scanning = false;
   String? _pickedImagePath;
   final ImagePicker _picker = ImagePicker();
+
+  String _selectedAction = 'Fertilizer';
+  final List<String> _actionOptions = ['Fertilizer', 'Irrigation', 'Pruning', 'Pesticide'];
+
+  String _selectedCrop = 'Tomato';
+  final List<String> _cropOptions = ['Tomato', 'Potato', 'Wheat', 'Corn', 'Cotton'];
+
+  final TextEditingController _noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
 
   void _startScan() {
     HapticFeedback.mediumImpact();
@@ -89,49 +105,357 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onScanComplete();
   }
 
+  Widget _buildQuickFarmLogCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: CropDocColors.primaryDark.withValues(alpha: 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: Colors.white, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: CropDocColors.safeLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.edit_document, color: CropDocColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Log Today's Action",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                    color: CropDocColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Target Crop",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: CropDocColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: _cropOptions.map((String option) {
+                final isSelected = _selectedCrop == option;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(
+                      option,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? Colors.white : CropDocColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: CropDocColors.primary,
+                    backgroundColor: CropDocColors.surface,
+                    side: BorderSide(
+                      color: isSelected ? CropDocColors.primary : CropDocColors.divider,
+                      width: 1.5,
+                    ),
+                    showCheckmark: false,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    onSelected: (bool selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedCrop = option;
+                        });
+                        HapticFeedback.selectionClick();
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Action Type",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: CropDocColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: _actionOptions.map((String option) {
+                final isSelected = _selectedAction == option;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(
+                      option,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? Colors.white : CropDocColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedColor: CropDocColors.primary,
+                    backgroundColor: CropDocColors.surface,
+                    side: BorderSide(
+                      color: isSelected ? CropDocColors.primary : CropDocColors.divider,
+                      width: 1.5,
+                    ),
+                    showCheckmark: false,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    onSelected: (bool selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedAction = option;
+                        });
+                        HapticFeedback.selectionClick();
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Quick Note",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: CropDocColors.textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: CropDocColors.background,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: CropDocColors.divider),
+            ),
+            child: TextField(
+              controller: _noteController,
+              decoration: const InputDecoration(
+                hintText: "E.g., Added 2kg of NPK...",
+                hintStyle: TextStyle(fontSize: 15, color: CropDocColors.textMuted),
+                border: InputBorder.none,
+                prefixIcon: Icon(Icons.notes, color: CropDocColors.textMuted, size: 20),
+                prefixIconConstraints: BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              style: const TextStyle(fontSize: 15, color: CropDocColors.textPrimary),
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                FarmLogService.instance.addLog(
+                  FarmLog(
+                    date: DateTime.now(),
+                    actionType: _selectedAction,
+                    cropName: _selectedCrop,
+                    note: _noteController.text,
+                  ),
+                );
+                _noteController.clear();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Log saved successfully!'),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: CropDocColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.check_circle_outline, size: 20),
+              label: const Text(
+                "Save Log",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticScanArea() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            "Diagnostic Scan",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+              color: CropDocColors.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickFromGallery,
+                child: Container(
+                  height: 104,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: CropDocColors.divider, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CropDocColors.primaryDark.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(
+                          color: CropDocColors.surface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.photo_library_outlined, color: CropDocColors.primary, size: 24),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Gallery",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: CropDocColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GestureDetector(
+                onTap: _startScan,
+                child: Container(
+                  height: 104,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [CropDocColors.primaryLight, CropDocColors.primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CropDocColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.center_focus_strong_rounded, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Take Photo",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final weather = DummyWeather.current;
 
     return Stack(
       children: [
-        // Camera viewfinder background
-        Positioned.fill(
-          child: Image.asset(
-            'assets/images/crop_field_bg.png',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) => Container(
-              color: CropDocColors.darkSurface,
-            ),
-          ),
+        // Clean background matching overall theme
+        Container(
+          color: CropDocColors.background,
         ),
 
-        // Dark overlay to simulate camera viewfinder
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF1B1B1B).withValues(alpha: 0.55),
-                  const Color(0xFF1B1B1B).withValues(alpha: 0.25),
-                  const Color(0xFF1B1B1B).withValues(alpha: 0.55),
-                ],
-                stops: const [0.0, 0.45, 1.0],
-              ),
-            ),
-          ),
-        ),
-
-        // Content
+        // Scrollable Content
         SafeArea(
           child: Column(
             children: [
-              // Weather banner
+              // Keep top fixed banner natively out of the scrollable body so it's always at the top
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 child: WeatherBanner(
                   icon: weather.icon,
                   message: t(context, 'weather_msg'),
@@ -142,114 +466,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       curve: Curves.easeOutCubic,
                     ).fadeIn(duration: 400.ms),
               ),
-
-              const Spacer(),
-
-              // Center crosshair area
-              SizedBox(
-                width: 220,
-                height: 220,
-                child: CustomPaint(
-                  painter: _ViewfinderPainter(),
-                ),
-              )
-                  .animate(
-                    onPlay: (c) => c.repeat(reverse: true),
-                  )
-                  .scaleXY(
-                    begin: 0.97,
-                    end: 1.0,
-                    duration: 2200.ms,
-                    curve: Curves.easeInOut,
+              
+              // Scrollable body to prevent 'Bottom Overflowed' during interactions
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildQuickFarmLogCard().animate().fadeIn(duration: 500.ms).slideY(begin: 0.1),
+                      const SizedBox(height: 28),
+                      _buildDiagnosticScanArea().animate().fadeIn(delay: 200.ms, duration: 500.ms).slideY(begin: 0.1),
+                    ],
                   ),
-
-              const SizedBox(height: 20),
-
-              // Hint text
-              Text(
-                t(context, 'home_hint'),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.3,
-                ),
-              ).animate().fadeIn(delay: 300.ms, duration: 500.ms),
-
-              const Spacer(),
-
-              // Bottom action area — Gallery + Scan + label
-              Padding(
-                padding: const EdgeInsets.only(bottom: 28, left: 28, right: 28),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Gallery button
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: _pickFromGallery,
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.photo_library_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          t(context, 'home_gallery'),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
-
-                    const SizedBox(width: 32),
-
-                    // Scan button (camera)
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ScanButton(onTap: _startScan),
-                        const SizedBox(height: 6),
-                        Text(
-                          t(context, 'home_take_photo'),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ).animate().scale(
-                          begin: const Offset(0.8, 0.8),
-                          delay: 200.ms,
-                          duration: 500.ms,
-                          curve: Curves.easeOutBack,
-                        ),
-
-                    const SizedBox(width: 32),
-
-                    // Spacer to keep scan button centered
-                    const SizedBox(width: 50),
-                  ],
                 ),
               ),
             ],
@@ -264,51 +494,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-}
-
-class _ViewfinderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.45)
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    const corner = 32.0;
-
-    // Top-left
-    canvas.drawLine(const Offset(0, corner), Offset.zero, paint);
-    canvas.drawLine(Offset.zero, const Offset(corner, 0), paint);
-
-    // Top-right
-    canvas.drawLine(
-        Offset(size.width - corner, 0), Offset(size.width, 0), paint);
-    canvas.drawLine(Offset(size.width, 0), Offset(size.width, corner), paint);
-
-    // Bottom-left
-    canvas.drawLine(
-        Offset(0, size.height - corner), Offset(0, size.height), paint);
-    canvas.drawLine(
-        Offset(0, size.height), Offset(corner, size.height), paint);
-
-    // Bottom-right
-    canvas.drawLine(Offset(size.width, size.height - corner),
-        Offset(size.width, size.height), paint);
-    canvas.drawLine(Offset(size.width - corner, size.height),
-        Offset(size.width, size.height), paint);
-
-    // Center cross (subtle)
-    final centerPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.2)
-      ..strokeWidth = 1;
-
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    canvas.drawLine(Offset(cx - 12, cy), Offset(cx + 12, cy), centerPaint);
-    canvas.drawLine(Offset(cx, cy - 12), Offset(cx, cy + 12), centerPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

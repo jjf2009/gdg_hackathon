@@ -191,4 +191,99 @@ class CropDocTheme {
       ),
     );
   }
+
+  static TextTheme get _darkTextTheme {
+    return TextTheme(
+      headlineLarge: GoogleFonts.outfit(
+        fontSize: 28, fontWeight: FontWeight.w700, color: const Color(0xFFE8E4D9), height: 1.2,
+      ),
+      headlineMedium: GoogleFonts.outfit(
+        fontSize: 22, fontWeight: FontWeight.w600, color: const Color(0xFFE8E4D9), height: 1.25,
+      ),
+      headlineSmall: GoogleFonts.outfit(
+        fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFFE8E4D9), height: 1.3,
+      ),
+      titleLarge: GoogleFonts.outfit(
+        fontSize: 17, fontWeight: FontWeight.w600, color: const Color(0xFFE8E4D9),
+      ),
+      titleMedium: GoogleFonts.outfit(
+        fontSize: 15, fontWeight: FontWeight.w500, color: const Color(0xFFD0CEC5),
+      ),
+      bodyLarge: GoogleFonts.outfit(
+        fontSize: 16, fontWeight: FontWeight.w400, color: const Color(0xFFD0CEC5), height: 1.5,
+      ),
+      bodyMedium: GoogleFonts.outfit(
+        fontSize: 14, fontWeight: FontWeight.w400, color: const Color(0xFFA0A090), height: 1.45,
+      ),
+      bodySmall: GoogleFonts.outfit(
+        fontSize: 12, fontWeight: FontWeight.w400, color: const Color(0xFF808078), height: 1.4,
+      ),
+      labelLarge: GoogleFonts.outfit(
+        fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFFE8E4D9), letterSpacing: 0.3,
+      ),
+      labelMedium: GoogleFonts.outfit(
+        fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFFA0A090),
+      ),
+      labelSmall: GoogleFonts.outfit(
+        fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFF808078), letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      colorScheme: const ColorScheme.dark(
+        primary: CropDocColors.primary,
+        primaryContainer: CropDocColors.primaryLight,
+        secondary: CropDocColors.secondary,
+        surface: Color(0xFF1E1E1E),
+        error: CropDocColors.danger,
+        onPrimary: CropDocColors.textOnPrimary,
+        onSurface: Color(0xFFE8E4D9),
+        onSecondary: Color(0xFFE8E4D9),
+      ),
+      textTheme: _darkTextTheme,
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1E1E1E),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFF333333), width: 0.5),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: CropDocColors.primary,
+          foregroundColor: CropDocColors.textOnPrimary,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: CropDocColors.primaryLight,
+          side: const BorderSide(color: CropDocColors.primaryLight, width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700, color: const Color(0xFFE8E4D9)),
+        iconTheme: const IconThemeData(color: Color(0xFFE8E4D9)),
+      ),
+      iconTheme: const IconThemeData(color: Color(0xFFA0A090), size: 24),
+      dividerTheme: const DividerThemeData(color: Color(0xFF333333), thickness: 0.5, space: 1),
+    );
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
@@ -170,8 +171,50 @@ class ScanResultScreen extends StatelessWidget {
                           .fadeIn(delay: 600.ms, duration: 400.ms)
                           .slideY(begin: 0.1, duration: 400.ms),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+                    ],
 
+                    // Share Result Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          final shareText = '🌱 CropDoc Scan Report\n'
+                              '━━━━━━━━━━━━━━━\n'
+                              '🌿 Crop: $displayCrop\n'
+                              '🔬 Finding: $displayDisease\n'
+                              '📊 Confidence: $confidencePct%\n'
+                              '📅 Date: ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}\n'
+                              '${isHealthy ? '✅ Status: Healthy' : '⚠️ Status: Treatment Needed'}\n'
+                              '━━━━━━━━━━━━━━━\n'
+                              'Scanned with CropDoc - AI Crop Disease Advisor';
+                          Clipboard.setData(ClipboardData(text: shareText));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Report copied to clipboard! Paste in WhatsApp or SMS.'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: CropDocColors.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.share_rounded, size: 18),
+                        label: const Text('Share Result'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: CropDocColors.primary,
+                          side: const BorderSide(color: CropDocColors.primary, width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                    ).animate()
+                        .fadeIn(delay: 700.ms, duration: 400.ms)
+                        .slideY(begin: 0.1, duration: 400.ms),
+
+                    const SizedBox(height: 20),
+
+                    if (!isHealthy) ...[
                       // Before/After recovery slider
                       RecoverySlider(
                         beforeImage: imagePath,
