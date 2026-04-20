@@ -13,7 +13,7 @@ class WeatherService {
 
   // ── OpenWeatherMap free tier (Current + Forecast) ──
   // Replace with your own key from https://openweathermap.org/api
-  static const String _apiKey = '4cca3574a10d08137b7e7e5efef8a0eb';
+  static const String _apiKey = 'e0119a9ad9cdb4560a91297cc543b74d';
 
   // Cache
   LiveWeatherData? _cachedData;
@@ -359,25 +359,5 @@ class WeatherService {
     }
   }
 
-  /// Fallback when everything fails
-  LiveWeatherData _buildFallback() {
-    return LiveWeatherData(
-      locationName: 'Offline',
-      condition: 'Unknown',
-      description: 'Weather data unavailable',
-      tempCelsius: 28,
-      feelsLike: 30,
-      humidity: 65,
-      windSpeedKmh: 8,
-      icon: Icons.cloud_off_rounded,
-      hourlyRain: [],
-      dailyHumidity: [],
-      sprayAdvisory: 'Unable to fetch weather — check conditions manually before spraying.',
-      windAdvisory: 'Wind data unavailable — check local conditions.',
-      diseaseRiskLevel: 'medium',
-      diseaseRiskMessage: 'Weather data unavailable — monitor crops visually for disease signs.',
-      lastUpdated: DateTime.now(),
-      isLive: false,
-    );
-  }
+
 }

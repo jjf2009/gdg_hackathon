@@ -12,6 +12,7 @@ import 'screens/onboarding_screen.dart';
 import 'widgets/layout/bottom_nav_bar.dart';
 import 'widgets/common/connectivity_banner.dart';
 import 'services/model_service.dart';
+import 'widgets/finance/advisor_sheet.dart';
 
 
 void main() async {
@@ -130,24 +131,32 @@ class _CropDocShellState extends State<CropDocShell> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Dark mode toggle
+                        // Agri-Finance Advisor Button
                         GestureDetector(
-                          onTap: widget.onToggleTheme,
+                          onTap: () => AdvisorSheet.show(context),
                           child: Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: CropDocColors.primary.withValues(alpha: 0.08),
+                              color: CropDocColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: CropDocColors.primary.withValues(alpha: 0.2),
+                                color: CropDocColors.primary.withValues(alpha: 0.3),
                               ),
                             ),
-                            child: Icon(
-                              widget.themeMode == ThemeMode.dark
-                                  ? Icons.light_mode_rounded
-                                  : Icons.dark_mode_rounded,
-                              size: 16,
-                              color: CropDocColors.primary,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.currency_rupee_rounded, size: 16, color: CropDocColors.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'FINANCE',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: CropDocColors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
